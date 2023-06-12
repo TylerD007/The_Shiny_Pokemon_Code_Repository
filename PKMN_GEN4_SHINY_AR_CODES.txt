@@ -1,7 +1,7 @@
 
  * -----------------------------------------------------------------------*
- *		  POKÉMON HEARTGOLD/SOULSILVER (US VERSION)		  *
- * 		ACTION REPLAY - LEGAL SHINY POKÉMON ENCOUNTERS		  *	
+ *		  POKÃ‰MON HEARTGOLD/SOULSILVER (US VERSION)		  *
+ * 		ACTION REPLAY - LEGAL SHINY POKÃ‰MON ENCOUNTERS		  *	
  * -----------------------------------------------------------------------*
  * Programmed in ARM/THUMB and converted to the Action Replay code syntax *
  * Copyright (C) 2023 Ciro Bogea Fernandes.				  *
@@ -30,22 +30,22 @@ INTRODUCTION
 **********************************
 
 The following Action Replay codes intercept the normal code execution flow right 
-before the first rng call in the pokémon battle routine (usually the one that defines the 
+before the first rng call in the pokÃ©mon battle routine (usually the one that defines the 
 encounter slot) and send it to address 027c0200, where the main function is stored. 
 The main function advances the current rng (stored at address 0x021d15a8) in a loop, until a 
 shiny pid is found. Then, it extracts the nature from the rng pair that forms the pid. After 
 that, it starts a reverse rng loop, to find the last rng whose extracted nature matches the 
 shiny rng nature. When such rng is found, the code retrieves the normal execution flow. 
-The code does not affect any other data besides the current rng. Because of that, any pokémon
+The code does not affect any other data besides the current rng. Because of that, any pokÃ©mon
 caught while the codes are activated are **100% legal***. For each type of encounter, there is
 a different set of codes, because the functions that trigger each event are located at different
 memory addresses and because the algorith used to calculate the PID is different in each case. 
 See the technical information section below for further details.
 
-WARNING: if the leading pokémon in your party has a nature that affects wild pokémon encounters,
+WARNING: if the leading pokÃ©mon in your party has a nature that affects wild pokÃ©mon encounters,
 such as Cute Charm, Synchronize and Pressure, the game executes additional RNG calls to compute 
 those effects. Since additional RNG calls modify the RNG allignment, the following codes 
-***DO NOT*** work, if the leading pokémon has a nature with overworld effects.
+***DO NOT*** work, if the leading pokÃ©mon has a nature with overworld effects.
 
 WARNING 2: do not use more than type of code at the same time in any circunstance. 
 As explained, since the codes write different instruction routines to the same memory block, using more 
@@ -841,16 +841,16 @@ d0000000 00000000
 
 
 **********************************
-*NOTE 1: Battles against stationary pokémon are triggered by interaction with their overworld sprites.
+*NOTE 1: Battles against stationary pokÃ©mon are triggered by interaction with their overworld sprites.
 Examples: Sudowoodo, Lapras, Electrodes in Rocket Hideout, Lugia, Ho-oh, Snorlax, Suicune, the legendary 
 birds, Mewtwo, Groudon, Kyogre, Rayquaza.
 
-*NOTE 2: Method 1 pokémon are generated after special events. Examples: the Johto, Kanto and Hoenn starters, 
-Togepi egg, Raikou and Entei in Burned Tower, Latios, Latias and any gift pokémon (Eevee, Extremespeed Dratini).
+*NOTE 2: Method 1 pokÃ©mon are generated after special events. Examples: the Johto, Kanto and Hoenn starters, 
+Togepi egg, Raikou and Entei in Burned Tower, Latios, Latias and any gift pokÃ©mon (Eevee, Extremespeed Dratini).
 
-*NOTE 3: The PID, and thus the shininess, of egg pokémon is decided when the egg is generated (i.e., when the
-Day-Care gentleman calls you with the Pokégear). Therefore, the codes must be activated, when egg is generated.
-Since the IVs of egg pokémon are calculated when you receive the egg from the Day-Care man, egg pokémon 
+*NOTE 3: The PID, and thus the shininess, of egg pokÃ©mon is decided when the egg is generated (i.e., when the
+Day-Care gentleman calls you with the PokÃ©gear). Therefore, the codes must be activated, when egg is generated.
+Since the IVs of egg pokÃ©mon are calculated when you receive the egg from the Day-Care man, egg pokÃ©mon 
 PID and IVs are unrelated.
 
 
@@ -858,9 +858,9 @@ PID and IVs are unrelated.
 A. TECHNICAL INFORMATION
 **********************************
 
-The following disassembled code refers to the routine HGSS - Method K - GRASS/DUNGEON POKÉMON.
+The following disassembled code refers to the routine HGSS - Method K - GRASS/DUNGEON POKÃ‰MON.
 
-HGSS - Method K - GRASS/DUNGEON POKÉMON:
+HGSS - Method K - GRASS/DUNGEON POKÃ‰MON:
 
 code interception:
 0224768E 4801     ldr     r0,=Lxx_#0x27C0200                      ;
@@ -898,8 +898,8 @@ main function:
 027C0236 4061     eor     r1,r4                                   ;r1=hiword(rng) xor loword(rng)
 027C0238 4069     eor     r1,r5                                   ;r1=hiword(rng) xor loword(rng) xor tid
 027C023A 4071     eor     r1,r6                                   ;r1=hiword(rng) xor loword(rng) xor tid xor sid
-027C023C 2908     cmp     r1,#0x8                                 ;if (hiword(rng) xor loword(rng) xor pid xor sid)<0x8, then the pokémon is shiny
-027C023E DAF6     bge     Lxx_#0x27C022E                          ;if pokémon is not shiny, loop back to address 0x27C022E
+027C023C 2908     cmp     r1,#0x8                                 ;if (hiword(rng) xor loword(rng) xor pid xor sid)<0x8, then the pokÃ©mon is shiny
+027C023E DAF6     bge     Lxx_#0x27C022E                          ;if pokÃ©mon is not shiny, loop back to address 0x27C022E
 027C0240 6838     ldr     r0,[r7]                                 ;loads r0 with the current rng address
 027C0242 6801     ldr     r1,[r0]                                 ;loads r1 with the current rng
 027C0244 9102     str     r1,[sp,#0x8]                            ;stores current rng in stack
@@ -909,14 +909,14 @@ main function:
 027C0250 F000F8E6 bl      Lxx_#0x27C0420                          ;function 0x27C0420 rewinds the current rng
 027C0254 4328     orr     r0,r5                                   ;r0=pid
 027C0256 2119     mov     r1,#0x19                                ;
-027C0258 F000F8FA bl      Lxx_#0x27C0450                          ;function 0x27C0450 extracts the pokémon nature from pid
+027C0258 F000F8FA bl      Lxx_#0x27C0450                          ;function 0x27C0450 extracts the pokÃ©mon nature from pid
 027C025C 0608     lsl     r0,r1,#0x18                             ;
 027C025E 0E00     lsr     r0,r0,#0x18                             ;r0=nature value
 027C0260 1C04     mov     r4,r0                                   ;
 027C0262 F000F8DD bl      Lxx_#0x27C0420                          ;*****here the nature validation loop begins*****
 027C0266 0405     lsl     r5,r0,#0x10                             ;r5=hiword(rng)
 027C0268 2119     mov     r1,#0x19                                ;
-027C026A F000F8F9 bl      Lxx_#0x27C0460                          ;function 0x27C0460 extracts the pokémon nature from hiword(rng)
+027C026A F000F8F9 bl      Lxx_#0x27C0460                          ;function 0x27C0460 extracts the pokÃ©mon nature from hiword(rng)
 027C026E 0608     lsl     r0,r1,#0x18                             ;
 027C0270 0E00     lsr     r0,r0,#0x18                             ;r0=tested nature value
 027C0272 42A0     cmp     r0,r4                                   ;if tested nature value=nature value, then shiny rng is valid
@@ -924,19 +924,19 @@ main function:
 027C0276 F000F8D3 bl      Lxx_#0x27C0420                          ;
 027C027A 4328     orr     r0,r5                                   ;r0=tested pid
 027C027C 2119     mov     r1,#0x19                                ;
-027C027E F000F8E7 bl      Lxx_#0x27C0450                          ;function 0x27C0460 extracts the pokémon nature from pid
+027C027E F000F8E7 bl      Lxx_#0x27C0450                          ;function 0x27C0460 extracts the pokÃ©mon nature from pid
 027C0282 0608     lsl     r0,r1,#0x18                             ;
 027C0284 0E00     lsr     r0,r0,#0x18                             ;r0=tested nature value from pid
 027C0286 42A0     cmp     r0,r4                                   ;if tested nature value from pid=nature value, then shiny rng is invalid
 027C0288 D0CB     beq     Lxx_#0x27C0222                          ;if shiny rng is invalid, get another shiny rng (branch to 0x27C0222)
 027C028A E7EA     b       Lxx_#0x27C0262                          ;nature validation loop (branch to 0x27C0262)
-027C028C F000F8C8 bl      Lxx_#0x27C0420                          ;function 0x27C0420 rewinds the current rng (RNG allignment: in case of grass/dungeon pokémon, only one rewind call is necessary; each encounter type has a number of rewind calls)
+027C028C F000F8C8 bl      Lxx_#0x27C0420                          ;function 0x27C0420 rewinds the current rng (RNG allignment: in case of grass/dungeon pokÃ©mon, only one rewind call is necessary; each encounter type has a number of rewind calls)
 027C0290 46C0     nop                                             ;
 027C0292 46C0     nop                                             ;
 027C0294 46C0     nop                                             ;
 027C0296 46C0     nop                                             ;
 027C0298 2164     mov     r1,#0x64                                ;
-027C029A F000F8E1 bl      Lxx_#0x27C0460                          ;function 0x27C0460 extracts the pokémon encounter value from hiword(rng)
+027C029A F000F8E1 bl      Lxx_#0x27C0460                          ;function 0x27C0460 extracts the pokÃ©mon encounter value from hiword(rng)
 027C029E B00C     add     sp,#0x30                                ;free stack
 027C02A0 BCF0     pop     {r4-r7}                                 ;restores registers r4-r7
 027C02A2 4A01     ldr     r2,=Lxx_#0x2247698                      ;
@@ -981,7 +981,7 @@ function_027C0420:
 function_027C0450:
 027C0450 B580     push    {r7,r14}                                ;
 027C0452 4F01     ldr     r7,=Lxx_#0x20F2BA4                      ;
-027C0454 47B8     blx     r7                                      ;calls function 020F2BA4, which extracts the pokémon nature from the rng
+027C0454 47B8     blx     r7                                      ;calls function 020F2BA4, which extracts the pokÃ©mon nature from the rng
 027C0456 BD80     pop     {r7,r15}                                ;end of function
 027C0458 2BA4     cmp     r3,#0xA4                                ;constants
 027C045A 020F     lsl     r7,r1,#0x8                              ;
@@ -991,7 +991,7 @@ function_027C0450:
 function_027C0460:
 027C0460 B580     push    {r7,r14}                                ;
 027C0462 4F01     ldr     r7,=Lxx_#0x20F2998                      ;
-027C0464 47B8     blx     r7                                      ;calls function 020F2998, which extracts the pokémon nature from the pid
+027C0464 47B8     blx     r7                                      ;calls function 020F2998, which extracts the pokÃ©mon nature from the pid
 027C0466 BD80     pop     {r7,r15}                                ;end of function
 027C0468 2998     cmp     r1,#0x98                                ;constants
 027C046A 020F     lsl     r7,r1,#0x8                              ;
@@ -1024,7 +1024,7 @@ B. PERSONAL NOTES
 **********************************
 
 After some months programming Final Fantasy IX (PSP) codes in MIPS, I decided to take a
-different course and try myself out with one my favorite games, Pokémon HG/SS. It was my very first
+different course and try myself out with one my favorite games, PokÃ©mon HG/SS. It was my very first
 experience coding in ARM/THUMB and I could say it was a positive one. In general, ARM/THUMB is
 not so different from MIPS. The halfword instruction size in THUMB makes the code more compact, but
 it also makes some coding techniques way trickier to pull off. Loading immediate values, for example,
