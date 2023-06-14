@@ -1,0 +1,746 @@
+
+ * -----------------------------------------------------------------------*
+ *		  POKÉMON PLATINUM (US VERSION)		  		  *
+ * 		ACTION REPLAY - LEGAL SHINY POKÉMON ENCOUNTERS		  *	
+ * -----------------------------------------------------------------------*
+ * Programmed in ARM/THUMB and converted to the Action Replay code syntax *
+ * Copyright (C) 2023 Ciro Bogea Fernandes.				  *
+ * email: cirobfes@hotmail.com						  *
+ * -----------------------------------------------------------------------*
+
+**********************************
+COPYRIGHT DISCLAIMER
+**********************************
+
+ * This library is free software. You can redistribute it and/or modify it 
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation;
+
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+ * Permission to use these codes and its documentation *AS IT IS* for any purpose
+ * is hereby granted without fee, provided that the above copyright notice appear 
+ * in all copies and that both that copyright notice and this permission notice appear
+ * in supporting documentation.  It is provided "as is" without express or implied warranty. 
+
+**********************************
+INTRODUCTION
+**********************************
+
+The following Action Replay codes intercept the normal code execution flow right 
+before the first rng call in the pokémon battle routine (usually the one that defines the 
+encounter slot) and send it to address 027c0200, where the main function is stored. 
+The main function advances the current rng (stored at address 0x021bfb14) in a loop, until a 
+shiny pid is found. Then, it extracts the nature from the rng pair that forms the pid. After 
+that, it starts a reverse rng loop, to find the last rng whose extracted nature matches the 
+shiny rng nature. When such rng is found, the code retrieves the normal execution flow. 
+The code does not affect any other data besides the current rng. Because of that, any pokémon
+caught while the codes are activated are **100% legal***. For each type of encounter, there is
+a different set of codes, because the functions that trigger each event are located at different
+memory addresses and because the algorith used to calculate the PID is different in each case. 
+See the technical information section below for further details.
+
+WARNING: if the leading pokémon in your party has a nature that affects wild pokémon encounters,
+such as Cute Charm, Synchronize and Pressure, the game executes additional RNG calls to compute 
+those effects. Since additional RNG calls modify the RNG allignment, the following codes 
+***DO NOT*** work, if the leading pokémon has a nature with overworld effects.
+
+WARNING 2: do not use more than type of code at the same time in any circunstance. 
+As explained, since the codes write different instruction routines to the same memory block, using more 
+than one code may cause crashes and other unexpected behaviours.
+
+**********************************
+1. METHOD J (PLATINUM) - GRASS/DUNGEON POKEMON (see Note 1)
+**********************************
+
+52241900 bd382001
+02241904 4801b510
+02241908 46c04687
+0224190c 027c0200
+027c0200 b08cb4f0
+027c0204 f8fcf000
+027c0208 218c6878
+027c020c 18406800
+027c0210 0c016800
+027c0214 0c000400
+027c0218 91019000
+027c021c 68016838
+027c0220 9d009102
+027c0224 68389e01
+027c0228 60019902
+027c022c 1c040c08
+027c0230 f8eef000
+027c0234 40611c01
+027c0238 40714069
+027c023c daf62908
+027c0240 68016838
+027c0244 f0009102
+027c0248 f000f8e3
+027c024c 0405f8e9
+027c0250 f8e6f000
+027c0254 21194328
+027c0258 f8faf000
+027c025c 0e000608
+027c0260 f0001c04
+027c0264 0405f8dd
+027c0268 f00068b9
+027c026c 0400f8f9
+027c0270 42a00c00
+027c0274 f000d00a
+027c0278 4328f8d3
+027c027c f0002119
+027c0280 0608f8e7
+027c0284 42a00e00
+027c0288 e7ead0cb
+027c028c f8c8f000
+027c0290 46c046c0
+027c0294 46c046c0
+027c0298 01092129
+027c029c f8e0f000
+027c02a0 bcf0b00c
+027c02a4 46974a00
+027c02a8 02241912
+027c0400 47704f00
+027c0404 027c0500
+027c0410 4f01b580
+027c0414 bd8047b8
+027c0418 0201d2e9
+027c0420 48064905
+027c0424 1c13684a
+027c0428 48054343
+027c042c 604818c0
+027c0430 04000c00
+027c0434 47700c00
+027c0438 021bfb10
+027c043c eeb9eb65
+027c0440 0a3561a1
+027c0450 4f01b580
+027c0454 bd8047b8
+027c0458 020e2178
+027c0460 4f01b580
+027c0464 bd8047b8
+027c0468 020e1f6c
+027c0470 f7ffb500
+027c0474 211fffd5
+027c0478 223e4001
+027c047c 40020112
+027c0480 231f0952
+027c0484 4003029b
+027c0488 bd000a9b
+027c0500 021bfb14
+027c0504 02101d40
+027c0508 00000a3e
+d0000000 00000000
+
+**********************************
+2. METHOD J (PLATINUM) - STATIONARY POKÉMON (see Note 2)
+**********************************
+
+52241b18 0e000608
+02241b1c 4801bd38
+02241b20 46c04687
+02241b24 027c0200
+027c0200 b08cb4f0
+027c0204 f8fcf000
+027c0208 218c6878
+027c020c 18406800
+027c0210 0c016800
+027c0214 0c000400
+027c0218 91019000
+027c021c 68016838
+027c0220 9d009102
+027c0224 68389e01
+027c0228 60019902
+027c022c 1c040c08
+027c0230 f8eef000
+027c0234 40611c01
+027c0238 40714069
+027c023c daf62908
+027c0240 68016838
+027c0244 f0009102
+027c0248 f000f8e3
+027c024c 0405f8e9
+027c0250 f8e6f000
+027c0254 21194328
+027c0258 f8faf000
+027c025c 0e000608
+027c0260 f0001c04
+027c0264 0405f8dd
+027c0268 f00068b9
+027c026c 0400f8f9
+027c0270 42a00c00
+027c0274 f000d00a
+027c0278 4328f8d3
+027c027c f0002119
+027c0280 0608f8e7
+027c0284 42a00e00
+027c0288 e7ead0cb
+027c028c f8c8f000
+027c0290 f8bef000
+027c0294 46c046c0
+027c0298 f00068b9
+027c029c b00cf8e1
+027c02a0 4a01bcf0
+027c02a4 46c04697
+027c02a8 02241b28
+027c0400 47704f00
+027c0404 027c0500
+027c0410 4f01b580
+027c0414 bd8047b8
+027c0418 0201d2e9
+027c0420 48064905
+027c0424 1c13684a
+027c0428 48054343
+027c042c 604818c0
+027c0430 04000c00
+027c0434 47700c00
+027c0438 021bfb10
+027c043c eeb9eb65
+027c0440 0a3561a1
+027c0450 4f01b580
+027c0454 bd8047b8
+027c0458 020e2178
+027c0460 4f01b580
+027c0464 bd8047b8
+027c0468 020e1f6c
+027c0470 f7ffb500
+027c0474 211fffd5
+027c0478 223e4001
+027c047c 40020112
+027c0480 231f0952
+027c0484 4003029b
+027c0488 bd000a9b
+027c0500 021bfb14
+027c0504 02101d40
+027c0508 00000a3e
+d0000000 00000000
+
+**********************************
+3. METHOD 1 (PLATINUM) - STARTERS/ROAMING/GIFT POKÉMON (see Note 3)
+**********************************
+
+52073e2c 2800980c
+02073e30 4801d107
+02073e34 46c04687
+02073e38 027c0200
+027c0200 b08cb4f0
+027c0204 f8fcf000
+027c0208 218c6878
+027c020c 18406800
+027c0210 0c016800
+027c0214 0c000400
+027c0218 91019000
+027c021c 68016838
+027c0220 9d009102
+027c0224 68389e01
+027c0228 60019902
+027c022c 1c040c08
+027c0230 f8eef000
+027c0234 40611c01
+027c0238 40714069
+027c023c daf62908
+027c0240 682e683d
+027c0244 04009602
+027c0248 b00c4320
+027c024c 4a01bcf0
+027c0250 46c04697
+027c0254 02073e40
+027c0400 47704f00
+027c0404 027c0500
+027c0410 4f01b580
+027c0414 bd8047b8
+027c0418 0201d2e9
+027c0420 48064905
+027c0424 1c13684a
+027c0428 48054343
+027c042c 604818c0
+027c0430 04000c00
+027c0434 47700c00
+027c0438 021bfb10
+027c043c eeb9eb65
+027c0440 0a3561a1
+027c0450 4f01b580
+027c0454 bd8047b8
+027c0458 020e2178
+027c0460 4f01b580
+027c0464 bd8047b8
+027c0468 020e1f6c
+027c0470 f7ffb500
+027c0474 211fffd5
+027c0478 223e4001
+027c047c 40020112
+027c0480 231f0952
+027c0484 4003029b
+027c0488 bd000a9b
+027c0500 021bfb14
+027c0504 02101d40
+027c0508 00000a3e
+d0000000 00000000
+
+**********************************
+4. METHOD J (PLATINUM) - SURFING
+**********************************
+
+5224199c bd10200b
+022419a0 4801b510
+022419a4 46c04687
+022419a8 027c0200
+027c0200 b08cb4f0
+027c0204 f8fcf000
+027c0208 218c6878
+027c020c 18406800
+027c0210 0c016800
+027c0214 0c000400
+027c0218 91019000
+027c021c 68016838
+027c0220 9d009102
+027c0224 68389e01
+027c0228 60019902
+027c022c 1c040c08
+027c0230 f8eef000
+027c0234 40611c01
+027c0238 40714069
+027c023c daf62908
+027c0240 68016838
+027c0244 f0009102
+027c0248 f000f8e3
+027c024c 0405f8e9
+027c0250 f8e6f000
+027c0254 21194328
+027c0258 f8faf000
+027c025c 0e000608
+027c0260 f0001c04
+027c0264 0405f8dd
+027c0268 f00068b9
+027c026c 0400f8f9
+027c0270 42a00c00
+027c0274 f000d00a
+027c0278 4328f8d3
+027c027c f0002119
+027c0280 0608f8e7
+027c0284 42a00e00
+027c0288 e7ead0cb
+027c028c f8c8f000
+027c0290 f8c6f000
+027c0294 46c046c0
+027c0298 01092129
+027c029c f8e0f000
+027c02a0 bcf0b00c
+027c02a4 46974a00
+027c02a8 022419ae
+027c0400 47704f00
+027c0404 027c0500
+027c0410 4f01b580
+027c0414 bd8047b8
+027c0418 0201d2e9
+027c0420 48064905
+027c0424 1c13684a
+027c0428 48054343
+027c042c 604818c0
+027c0430 04000c00
+027c0434 47700c00
+027c0438 021bfb10
+027c043c eeb9eb65
+027c0440 0a3561a1
+027c0450 4f01b580
+027c0454 bd8047b8
+027c0458 020e2178
+027c0460 4f01b580
+027c0464 bd8047b8
+027c0468 020e1f6c
+027c0470 f7ffb500
+027c0474 211fffd5
+027c0478 223e4001
+027c047c 40020112
+027c0480 231f0952
+027c0484 4003029b
+027c0488 bd000a9b
+027c0500 021bfb14
+027c0504 02101d40
+027c0508 00000a3e
+d0000000 00000000
+
+**********************************
+5. METHOD J (PLATINUM) - FISHING (see Note 4)
+**********************************
+
+522410BC 1C06F8D7
+022410C0 46874800
+022410C4 027C0200
+027c0200 b08cb4f0
+027c0204 f8fcf000
+027c0208 218c6878
+027c020c 18406800
+027c0210 0c016800
+027c0214 0c000400
+027c0218 91019000
+027c021c 68016838
+027c0220 9d009102
+027c0224 68389e01
+027c0228 60019902
+027c022c 1c040c08
+027c0230 f8eef000
+027c0234 40611c01
+027c0238 40714069
+027c023c daf62908
+027c0240 68016838
+027c0244 f0009102
+027c0248 f000f8e3
+027c024c 0405f8e9
+027c0250 f8e6f000
+027c0254 21194328
+027c0258 f8faf000
+027c025c 0e000608
+027c0260 f0001c04
+027c0264 0405f8dd
+027c0268 f00068b9
+027c026c 0400f8f9
+027c0270 42a00c00
+027c0274 f000d00a
+027c0278 4328f8d3
+027c027c f0002119
+027c0280 0608f8e7
+027c0284 42a00e00
+027c0288 e7ead0cb
+027c028c f8c8f000
+027c0290 f8c6f000
+027c0294 f8c4f000
+027c0298 01092129
+027c029c f8e0f000
+027c02a0 bcf0b00c
+027c02a4 46974a00
+027c02a8 022410cc
+027c0400 47704f00
+027c0404 027c0500
+027c0410 4f01b580
+027c0414 bd8047b8
+027c0418 0201d2e9
+027c0420 48064905
+027c0424 1c13684a
+027c0428 48054343
+027c042c 604818c0
+027c0430 04000c00
+027c0434 47700c00
+027c0438 021bfb10
+027c043c eeb9eb65
+027c0440 0a3561a1
+027c0450 4f01b580
+027c0454 bd8047b8
+027c0458 020e2178
+027c0460 4f01b580
+027c0464 bd8047b8
+027c0468 020e1f6c
+027c0470 f7ffb500
+027c0474 211fffd5
+027c0478 223e4001
+027c047c 40020112
+027c0480 231f0952
+027c0484 4003029b
+027c0488 bd000a9b
+027c0500 021bfb14
+027c0504 02101d40
+027c0508 00000a3e
+d0000000 00000000
+
+**********************************
+6. METHOD J (PLATINUM) - HONEY TREE (see Note 5)
+**********************************
+
+52242058 faecf000
+0224205c 46874800
+02242060 027c0200
+027c0200 b08cb4f0
+027c0204 f8fcf000
+027c0208 218c6878
+027c020c 18406800
+027c0210 0c016800
+027c0214 0c000400
+027c0218 91019000
+027c021c 68016838
+027c0220 9d009102
+027c0224 68389e01
+027c0228 60019902
+027c022c 1c040c08
+027c0230 f8eef000
+027c0234 40611c01
+027c0238 40714069
+027c023c daf62908
+027c0240 68016838
+027c0244 f0009102
+027c0248 f000f8e3
+027c024c 0405f8e9
+027c0250 f8e6f000
+027c0254 21194328
+027c0258 f8faf000
+027c025c 0e000608
+027c0260 f0001c04
+027c0264 0405f8dd
+027c0268 f00068b9
+027c026c 0400f8f9
+027c0270 42a00c00
+027c0274 f000d00a
+027c0278 4328f8d3
+027c027c f0002119
+027c0280 0608f8e7
+027c0284 42a00e00
+027c0288 e7ead0cb
+027c028c f8c8f000
+027c0290 46c046c0
+027c0294 46c046c0
+027c0298 f0004903
+027c029c b00cf8e1
+027c02a0 4e02bcf0
+027c02a4 46c046b7
+027c02a8 00001746
+027c02ac 02242066
+027c0400 47704f00
+027c0404 027c0500
+027c0410 4f01b580
+027c0414 bd8047b8
+027c0418 0201d2e9
+027c0420 48064905
+027c0424 1c13684a
+027c0428 48054343
+027c042c 604818c0
+027c0430 04000c00
+027c0434 47700c00
+027c0438 021bfb10
+027c043c eeb9eb65
+027c0440 0a3561a1
+027c0450 4f01b580
+027c0454 bd8047b8
+027c0458 020e2178
+027c0460 4f01b580
+027c0464 bd8047b8
+027c0468 020e1f6c
+027c0470 f7ffb500
+027c0474 211fffd5
+027c0478 223e4001
+027c047c 40020112
+027c0480 231f0952
+027c0484 4003029b
+027c0488 bd000a9b
+027c0500 021bfb14
+027c0504 02101d40
+027c0508 00000a3e
+d0000000 00000000
+
+
+**********************************
+*NOTE 1: The Safari Zone in Pokémon Platinum is treated as a regular area. Hence, use the grass codes for
+grass encounters, the surfing codes for water encounters and the fishing codes for fishing pokémon.
+
+*NOTE 2: Battles against stationary pokémon are triggered by interaction with their overworld sprites.
+Examples: Giratina, Dialga, Palkia, Uxie, Azelf, Heatran, Regigigas and the Regi trio.
+
+*NOTE 3: Method 1 pokémon are generated after special events. Examples: the starters, Mesprit, Cresselia,
+the roaming legendary birds and any gift pokémon (Eevee, Togepi, Porygon, Riolu).
+
+*NOTE 4: If you get the message 'not even a nibble', you must advance the RNG a few frames (by battling a 
+wild pokémon or trainer, save reset, or even going to a place with moving NPCs, like a city), before casting
+the hook again. If you don't advance the RNG, the codes will keep retrieving the same shiny RNG that makes 
+no pokémon bite the bait. This is not a bug, it is an unavoidable effect of the codes that, if corrected, might
+induce battles against pokémon that wouldn't normally appear and, as such, could be considered illegal.
+
+*NOTE 5: honey tree codes must be on, when you check the tree after the six-hour time period.
+
+**********************************
+A. TECHNICAL INFORMATION
+**********************************
+
+Method J in Pokémon Platinum is very similar to Method K in HeartGold/SoulSilver. The only differences are
+the function addresses (for obvious reasons) and the function 0x020e1f6c, which takes argument r1=0xa3e 
+(instead of r1=0x19) and retrieves the nature at register r0 (instead of r1).
+
+The following disassembled code refers to the routine HGSS - Method K - GRASS/DUNGEON POKÉMON. 
+
+HGSS - Method K - GRASS/DUNGEON POKÉMON:
+
+code interception:
+0224768E 4801     ldr     r0,=Lxx_#0x27C0200                      ;
+02247690 4687     mov     r15,r0                                  ;sends code execution to address 0x27c0200, where the main function is stored
+02247692 46C0     nop                                             ;
+02247694 0200     lsl     r0,r0,#0x8                              ;constants
+02247696 027C     lsl     r4,r7,#0x9                              ;
+
+main function:
+027C0200 B4F0     push    {r4-r7}                                 ;saves registers r4-r7
+027C0202 B08C     add     sp,-#0x30                               ;allocates stack
+027C0204 F000F8FC bl      Lxx_#0x27C0400                          ;function 0x27C0400 loads r7 with a pointer to address 0x27c0500, where a list of constants is stored
+027C0208 6878     ldr     r0,[r7,#0x4]                            ;loads r0 with main offset pointer address 0x2111880     
+027C020A 2184     mov     r1,#0x84                                ;
+027C020C 6800     ldr     r0,[r0]                                 ;loads r0 with main offset pointer
+027C020E 1840     add     r0,r0,r1                                ;r0=offset pointer+0x84, where the trainer id/sid values are stored
+027C0210 6800     ldr     r0,[r0]                                 ;loads r0 with trainer id/sid
+027C0212 0C01     lsr     r1,r0,#0x10                             ;r1=trainer sid
+027C0214 0400     lsl     r0,r0,#0x10                             ;
+027C0216 0C00     lsr     r0,r0,#0x10                             ;r0=trainer id
+027C0218 9000     str     r0,[sp]                                 ;stores trainer id in stack
+027C021A 9101     str     r1,[sp,#0x4]                            ;stores trainer sid in stack
+027C021C 6838     ldr     r0,[r7]                                 ;loads r0 with the current rng address
+027C021E 6801     ldr     r1,[r0]                                 ;loads r1 with the current rng
+027C0220 9102     str     r1,[sp,#0x8]                            ;stores current rng in stack
+027C0222 9D00     ldr     r5,[sp]                                 ;loads r5 with trainer id
+027C0224 9E01     ldr     r6,[sp,#0x4]                            ;loads r6 with trainer sid
+027C0226 6838     ldr     r0,[r7]                                 ;loads r0 with the current rng address
+027C0228 9902     ldr     r1,[sp,#0x8]                            ;loads r1 with stored rng in stack
+027C022A 6001     str     r1,[r0]                                 ;stores rng in stack as current rng
+027C022C 0C08     lsr     r0,r1,#0x10                             ;r0=hiword(rng)
+027C022E 1C04     mov     r4,r0                                   ;*****here the shiny rng loop begins*****
+027C0230 F000F8EE bl      Lxx_#0x27C0410                          ;function 0x27C0410 advances the current rng
+027C0234 1C01     mov     r1,r0                                   ;r1=hiword(rng)
+027C0236 4061     eor     r1,r4                                   ;r1=hiword(rng) xor loword(rng)
+027C0238 4069     eor     r1,r5                                   ;r1=hiword(rng) xor loword(rng) xor tid
+027C023A 4071     eor     r1,r6                                   ;r1=hiword(rng) xor loword(rng) xor tid xor sid
+027C023C 2908     cmp     r1,#0x8                                 ;if (hiword(rng) xor loword(rng) xor pid xor sid)<0x8, then the pokémon is shiny
+027C023E DAF6     bge     Lxx_#0x27C022E                          ;if pokémon is not shiny, loop back to address 0x27C022E
+027C0240 6838     ldr     r0,[r7]                                 ;loads r0 with the current rng address
+027C0242 6801     ldr     r1,[r0]                                 ;loads r1 with the current rng
+027C0244 9102     str     r1,[sp,#0x8]                            ;stores current rng in stack
+027C0246 F000F8E3 bl      Lxx_#0x27C0410                          ;function 0x27C0410 advances the current rng
+027C024A F000F8E9 bl      Lxx_#0x27C0420                          ;function 0x27C0420 rewinds the current rng
+027C024E 0405     lsl     r5,r0,#0x10                             ;r5=hiword(pid)
+027C0250 F000F8E6 bl      Lxx_#0x27C0420                          ;function 0x27C0420 rewinds the current rng
+027C0254 4328     orr     r0,r5                                   ;r0=pid
+027C0256 2119     mov     r1,#0x19                                ;
+027C0258 F000F8FA bl      Lxx_#0x27C0450                          ;function 0x27C0450 extracts the pokémon nature from pid
+027C025C 0608     lsl     r0,r1,#0x18                             ;
+027C025E 0E00     lsr     r0,r0,#0x18                             ;r0=nature value
+027C0260 1C04     mov     r4,r0                                   ;
+027C0262 F000F8DD bl      Lxx_#0x27C0420                          ;*****here the nature validation loop begins*****
+027C0266 0405     lsl     r5,r0,#0x10                             ;r5=hiword(rng)
+027C0268 2119     mov     r1,#0x19                                ;
+027C026A F000F8F9 bl      Lxx_#0x27C0460                          ;function 0x27C0460 extracts the pokémon nature from hiword(rng)
+027C026E 0608     lsl     r0,r1,#0x18                             ;
+027C0270 0E00     lsr     r0,r0,#0x18                             ;r0=tested nature value
+027C0272 42A0     cmp     r0,r4                                   ;if tested nature value=nature value, then shiny rng is valid
+027C0274 D00A     beq     Lxx_#0x27C028C                          ;if shiny rng is valid, break nature validation loop (branch to 0x27C028C)
+027C0276 F000F8D3 bl      Lxx_#0x27C0420                          ;
+027C027A 4328     orr     r0,r5                                   ;r0=tested pid
+027C027C 2119     mov     r1,#0x19                                ;
+027C027E F000F8E7 bl      Lxx_#0x27C0450                          ;function 0x27C0460 extracts the pokémon nature from pid
+027C0282 0608     lsl     r0,r1,#0x18                             ;
+027C0284 0E00     lsr     r0,r0,#0x18                             ;r0=tested nature value from pid
+027C0286 42A0     cmp     r0,r4                                   ;if tested nature value from pid=nature value, then shiny rng is invalid
+027C0288 D0CB     beq     Lxx_#0x27C0222                          ;if shiny rng is invalid, get another shiny rng (branch to 0x27C0222)
+027C028A E7EA     b       Lxx_#0x27C0262                          ;nature validation loop (branch to 0x27C0262)
+027C028C F000F8C8 bl      Lxx_#0x27C0420                          ;function 0x27C0420 rewinds the current rng (RNG allignment: in case of grass/dungeon pokémon, only one rewind call is necessary; each encounter type has a number of rewind calls)
+027C0290 46C0     nop                                             ;
+027C0292 46C0     nop                                             ;
+027C0294 46C0     nop                                             ;
+027C0296 46C0     nop                                             ;
+027C0298 2164     mov     r1,#0x64                                ;
+027C029A F000F8E1 bl      Lxx_#0x27C0460                          ;function 0x27C0460 extracts the pokémon encounter value from hiword(rng)
+027C029E B00C     add     sp,#0x30                                ;free stack
+027C02A0 BCF0     pop     {r4-r7}                                 ;restores registers r4-r7
+027C02A2 4A01     ldr     r2,=Lxx_#0x2247698                      ;
+027C02A4 4697     mov     r15,r2                                  ;restores the main code execution flow (enf of main function)
+027C02A6 0000     lsl     r0,r0,#0x0                              ;constants
+027C02A8 7698     strb    r0,[r3,#0x1A]                           ;
+
+function_027C0400:
+027C0400 4F00     ldr     r7,=Lxx_#0x27C0500                      ;loads r7 with a pointer to address 0x27C0500, where a list of constants is stored
+027C0402 4770     bx      r14                                     ;end of function
+027C0404 0500     lsl     r0,r0,#0x14                             ;constants
+027C0406 027C     lsl     r4,r7,#0x9                              ;
+
+function_027C0410:
+027C0410 B580     push    {r7,r14}                                ;
+027C0412 4F01     ldr     r7,=Lxx_#0x201FD45                      ;calls function 0x201FD44, which advances the current rng
+027C0414 47B8     blx     r7                                      ;
+027C0416 BD80     pop     {r7,r15}                                ;end of function
+027C0418 FD45     bl      lr+#0xA8A                               ;constants
+027C041A 0201     lsl     r1,r0,#0x8                              ;
+
+function_027C0420:
+027C0420 4905     ldr     r1,=Lxx_#0x21D15A4                      ;
+027C0422 4806     ldr     r0,=Lxx_#0xEEB9EB65                     ;
+027C0424 684A     ldr     r2,[r1,#0x4]                            ;
+027C0426 1C13     mov     r3,r2                                   ;
+027C0428 4343     mul     r3,r0                                   ;
+027C042A 4805     ldr     r0,=Lxx_#0xA3561A1                      ;
+027C042C 18C0     add     r0,r0,r3                                ;
+027C042E 6048     str     r0,[r1,#0x4]                            ;rewinds current rng
+027C0430 0C00     lsr     r0,r0,#0x10                             ;
+027C0432 0400     lsl     r0,r0,#0x10                             ;
+027C0434 0C00     lsr     r0,r0,#0x10                             ;
+027C0436 4770     bx      r14                                     ;end of function
+027C0438 15A4     asr     r4,r4,#0x16                             ;constants
+027C043A 021D     lsl     r5,r3,#0x8                              ;
+027C043C EB65     ????                                            ;
+027C043E EEB9     ????                                            ;
+027C0440 61A1     str     r1,[r4,#0x18]                           ;
+027C0442 0A35     lsr     r5,r6,#0x8                              ;
+
+function_027C0450:
+027C0450 B580     push    {r7,r14}                                ;
+027C0452 4F01     ldr     r7,=Lxx_#0x20F2BA4                      ;
+027C0454 47B8     blx     r7                                      ;calls function 020F2BA4, which extracts the pokémon nature from the rng
+027C0456 BD80     pop     {r7,r15}                                ;end of function
+027C0458 2BA4     cmp     r3,#0xA4                                ;constants
+027C045A 020F     lsl     r7,r1,#0x8                              ;
+027C045C 0000     lsl     r0,r0,#0x0                              ;
+027C045E 0000     lsl     r0,r0,#0x0                              ;
+
+function_027C0460:
+027C0460 B580     push    {r7,r14}                                ;
+027C0462 4F01     ldr     r7,=Lxx_#0x20F2998                      ;
+027C0464 47B8     blx     r7                                      ;calls function 020F2998, which extracts the pokémon nature from the pid
+027C0466 BD80     pop     {r7,r15}                                ;end of function
+027C0468 2998     cmp     r1,#0x98                                ;constants
+027C046A 020F     lsl     r7,r1,#0x8                              ;
+027C046C 0000     lsl     r0,r0,#0x0                              ;
+027C046E 0000     lsl     r0,r0,#0x0                              ;
+
+function_027C0470:
+027C0470 B500     push    {r14}                                   ;function 027C0470 extracts the iv values from the current rng (only used in the bug-catching contest and safari zone routines)
+027C0472 F7FFFFD5 bl      Lxx_#0x27C0420                          ;
+027C0476 211F     mov     r1,#0x1F                                ;
+027C0478 4001     and     r1,r0                                   ;r1=hp/speed iv
+027C047A 223E     mov     r2,#0x3E                                ;
+027C047C 0112     lsl     r2,r2,#0x4                              ;
+027C047E 4002     and     r2,r0                                   ;
+027C0480 0952     lsr     r2,r2,#0x5                              ;r2=atk/spatk iv
+027C0482 231F     mov     r3,#0x1F                                ;
+027C0484 029B     lsl     r3,r3,#0xA                              ;
+027C0486 4003     and     r3,r0                                   ;
+027C0488 0A9B     lsr     r3,r3,#0xA                              ;r3=def/spdef iv
+027C048A BD00     pop     {r15}                                   ;end of function
+
+list of constants:
+027C0500 15A8     asr     r0,r5,#0x16                             ;
+027C0502 021D     lsl     r5,r3,#0x8                              ;current rng address
+027C0504 1880     add     r0,r0,r2                                ;
+027C0506 0211     lsl     r1,r2,#0x8                              ;main offset address
+
+**********************************
+B. PERSONAL NOTES
+**********************************
+
+After some months programming Final Fantasy IX (PSP) codes in MIPS, I decided to take a
+different course and try myself out with one my favorite games, Pokémon HG/SS. It was my very first
+experience coding in ARM/THUMB and I could say it was a positive one. In general, ARM/THUMB is
+not so different from MIPS. The halfword instruction size in THUMB makes the code more compact, but
+it also makes some coding techniques way trickier to pull off. Loading immediate values, for example,
+requires the allocation of a specific memory block for the loaded constant. Because of that, we have
+to place the code interception and choose the linkage registers thoughtfully, to prevent any data loss 
+or crashes. The same considerations apply by handling the code execution back to its original state.
+The ARM flag system is another complicating factor in contrast to the straighforward MIPS comparision
+system, specially because it considerably limits our options of if/else/switch statements. 
+Nevertheless, putting all these issues aside, ARM/THUMB is objectively easier to read, write and 
+modify than MIPS.
+
+I strongly encourage all readers to learn machine language. It's easy, it's accessible, it's fun.
+Do not get carried away by all weird symbols and terminology. There are very few instructions to 
+learn: mov, ldr/str, ldmia/stmia, b, cmp, push/pop, the logical (lsl, lsr, and, orr, eor) and the 
+mathematical (add, sub, rsub, mul) operations, nothing more, nothing less. Consider learning machine
+code like learning a language with only a handful of words. I am positive anyone can aquire very 
+satisfactory skills in just a couple of days. The time investiment is totally worth it. The knowledge
+on machine language will allow you to play and enjoy your favourite games on a brand new level, like
+you never did in your life. 
+
+If you want to reach me, send me an email to cirobfes@hotmail.com
+
+EOF
