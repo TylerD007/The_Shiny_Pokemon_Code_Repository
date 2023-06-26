@@ -1,5 +1,5 @@
 /*
- * Pokémon RNG Repository
+ * PokÃ©mon RNG Repository
  * Written in C++
 
  * Copyright (C) 2023 Ciro Bogea Fernandes.
