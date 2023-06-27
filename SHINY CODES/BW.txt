@@ -1,7 +1,7 @@
 
  * -----------------------------------------------------------------------*
- *		  POKÉMON BLACK/WHITE (US VERSION)			  *
- * 		ACTION REPLAY - LEGAL SHINY POKÉMON ENCOUNTERS		  *	
+ *		  POKÃ‰MON BLACK/WHITE (US VERSION)			  *
+ * 		ACTION REPLAY - LEGAL SHINY POKÃ‰MON ENCOUNTERS		  *	
  * -----------------------------------------------------------------------*
  * Programmed in ARM/THUMB and converted to the Action Replay code syntax *
  * Copyright (C) 2023 Ciro Bogea Fernandes.				  *
@@ -29,33 +29,33 @@ COPYRIGHT DISCLAIMER
 INTRODUCTION
 **********************************
 
-In Pokémon Black/White, the player can find pokémon through a wide variety of 
+In PokÃ©mon Black/White, the player can find pokÃ©mon through a wide variety of 
 forms, such as battles, gifts, eggs and special events. Depending on the type of encounter,
-the game uses a different function to compute the pokémon attributes, based on an ordered
+the game uses a different function to compute the pokÃ©mon attributes, based on an ordered
 set of numbers called RNG (random number generator). 
 
-Taking as example the function that calculates the attributes of pokémon found in 
+Taking as example the function that calculates the attributes of pokÃ©mon found in 
 grass/dungeon areas, the first RNG call prepares the battle module, the second RNG
 decides whether a battle is to be triggered or not, the third RNG is used to define the
-pokémon species (out of a list of ten or eleven encounter slots), the fifth RNG call
-is used to set the so called PID (pokémon identification number) and the sixth RNG
-sets the nature. The PID is the most important number in the pokémon data structure. 
+pokÃ©mon species (out of a list of ten or eleven encounter slots), the fifth RNG call
+is used to set the so called PID (pokÃ©mon identification number) and the sixth RNG
+sets the nature. The PID is the most important number in the pokÃ©mon data structure. 
 It is used to define many attributes, like nature, gender and shininess. In Generation V,
-the pokémon IVs are unrelated to the main RNG. Their values are later decided based on 
+the pokÃ©mon IVs are unrelated to the main RNG. Their values are later decided based on 
 another type of RNG called Mersenne Twister RNG.
 
-The routine used for grass/dungeon establishes the stardard pokémon calculation
+The routine used for grass/dungeon establishes the stardard pokÃ©mon calculation
 in Black/White. This routine is called *Method PIDRNG*. The functions for other 
 encounter types (surfing, fishing, etc.) are variations of the standard Method PIDRNG, with 
 slight modifications. Some may lack the battle trigger RNG call, some may have additional 
 RNG calls, but in the end, they all share the basic pattern described above.
 
-The Action Replay codes in this document intercept the function that calculates the pokémon 
+The Action Replay codes in this document intercept the function that calculates the pokÃ©mon 
 data structure, advance the RNG until a valid shiny RNG is found and return the code execution 
-to its normal state, to let the game calculate the pokémon based on the shiny RNG. In other
-words, the AR codes force the game to always use RNGs that result in shiny pokémon. The codes 
-*do not* change any other information besides the current RNG. Because of that, any shiny pokémon
-caught while the codes are activated are *100% legal*. The pokémon species, nature, PID, 
+to its normal state, to let the game calculate the pokÃ©mon based on the shiny RNG. In other
+words, the AR codes force the game to always use RNGs that result in shiny pokÃ©mon. The codes 
+*do not* change any other information besides the current RNG. Because of that, any shiny pokÃ©mon
+caught while the codes are activated are *100% legal*. The pokÃ©mon species, nature, PID, 
 as well as any other attribute, match the results from an existing and obtainable set of
 RNGs in the game.
 
@@ -65,10 +65,10 @@ WARNINGS
 
 Please, read the following notes thoroughly before using the codes.
 
-1. If the leading pokémon in your party has a nature that affects the opposing wild pokémon
+1. If the leading pokÃ©mon in your party has a nature that affects the opposing wild pokÃ©mon
 attributes, such as Cute Charm, Synchronize or Pressure, the game executes additional RNG 
 calls to compute those effects. Since the extra RNG calls modify the RNG allignment established
-by our codes, the codes ***DO NOT*** work, if the leading pokémon has a nature with 
+by our codes, the codes ***DO NOT*** work, if the leading pokÃ©mon has a nature with 
 overworld effects.
 
 2. Do not use more than one type of code at the same time in any circunstance. Since the 
@@ -86,19 +86,19 @@ has a different encounter rate, as follows:
 3.6. Sweet scent/Honey:		no encounter check.
 
 If a RNG that does not trigger a battle preceeds a shiny RNG, the shiny RNG is considered 
-invalid, since no pokémon can be fought at all. The lower the encounter rate in the area is,
+invalid, since no pokÃ©mon can be fought at all. The lower the encounter rate in the area is,
 the more difficult it is to find a valid shiny RNG. For example, as the player surfs on
 calm water, only 3% of the total amount of shiny RNGs are valid! If the player uses 
-Sweet Scent/Honey to attice wild pokémon, no encounter check is performed, though. Consequently, 
+Sweet Scent/Honey to attice wild pokÃ©mon, no encounter check is performed, though. Consequently, 
 using Sweet Scent/Honey grants the maximum range of valid shiny RNGs. Sweet Scent/Honey
-has no impact on the chances of getting a pokémon with any specific attribute. Since
+has no impact on the chances of getting a pokÃ©mon with any specific attribute. Since
 the player can hit any shiny RNG with Sweet Scent/Honey, encounter rates are not taken into 
-consideration to define if a pokémon is legal or not.
+consideration to define if a pokÃ©mon is legal or not.
 
 If the user wants to disable the encounter rate validation, to get the widest spread of shiny
 RNGs available, do not activate the portion of code separated from the main body by a blank line,
 if it exists. Remember that, without the encounter rate validation, the player will battle 
-pokémon he/she would not normally do, but they are still considered legit. It's really up to
+pokÃ©mon he/she would not normally do, but they are still considered legit. It's really up to
 the user to decide the level of legitimacy he/she wants.
 
 4. The codes add extra computational demand to the game hardware, that is obviously not
@@ -106,12 +106,12 @@ originally programmed. As a consequence, the codes will cause lag. In most cases
 is unnoticeable, but it can reach half a second, particularly in low encounter rate areas.
 Disabling the encounter rate validation code portion reduces the lag considerably.
 
-5. Generation V introduces the shiny-lock routine, a function that prevents some pokémon 
-to be shiny. The shiny-locked pokémon are Celebi, Arceus, Victini, Reshiram, Zekrom, Keldeo 
-and Meloetta. If you wish to catch any of these pokémon in its shiny form, the codes below 
+5. Generation V introduces the shiny-lock routine, a function that prevents some pokÃ©mon 
+to be shiny. The shiny-locked pokÃ©mon are Celebi, Arceus, Victini, Reshiram, Zekrom, Keldeo 
+and Meloetta. If you wish to catch any of these pokÃ©mon in its shiny form, the codes below 
 turn the PID type 1 (shiny-lock) routine into PID type 2 (regular PID) routine. Use them 
-in combination with the codes for stationary pokémon, for example, to catch shiny Reshiram 
-or shiny Zekrom. Remember that shiny versions of shiny-locked pokémon are considered illegal
+in combination with the codes for stationary pokÃ©mon, for example, to catch shiny Reshiram 
+or shiny Zekrom. Remember that shiny versions of shiny-locked pokÃ©mon are considered illegal
 by all means.
 
 52018724 1c44ffe3
@@ -120,7 +120,7 @@ by all means.
 d0000000 00000000
 
 **********************************
-1. GRASS/DUNGEON/SHAKING GRASS/CAVE SPOT POKÉMON
+1. GRASS/DUNGEON/SHAKING GRASS/CAVE SPOT POKÃ‰MON
 **********************************
 
 521aa414 d1002801
@@ -214,12 +214,12 @@ d0000000 00000000
 d0000000 00000000
 
 **********************************
-2. STARTERS/STATIONARY/FOSSIL POKÉMON
+2. STARTERS/STATIONARY/FOSSIL POKÃ‰MON
 **********************************
    2.1. Codes must be active when you select your starter.
-   2.2. Stationary pokémon are wild pokémon with overworld sprites: Cobalion, 
+   2.2. Stationary pokÃ©mon are wild pokÃ©mon with overworld sprites: Cobalion, 
 	Terrakion, Virizion, Kyurem, Volcarona, Darmanitan (Zen Mode), Musharna
-	(Telepathy), Foongus and Ammonguss (as pokéballs in Routes 6 and 10). 
+	(Telepathy), Foongus and Ammonguss (as pokÃ©balls in Routes 6 and 10). 
    2.3. Codes must be active when you revive the fossil in Nacrene City Museum.
 **********************************
 
@@ -301,9 +301,9 @@ d0000000 00000000
 d0000000 00000000
 
 **********************************
-3. ROAMING POKÉMON/LARVESTA EGG
+3. ROAMING POKÃ‰MON/LARVESTA EGG
 **********************************
-   3.1. The roaming pokémon are Thundurus and Tornadus. Codes must be active during 
+   3.1. The roaming pokÃ©mon are Thundurus and Tornadus. Codes must be active during 
 	thunderstorm cutscene in Route 7.
    3.2. Codes must be active when you receive the Larvesta egg.	
 **********************************
@@ -559,12 +559,12 @@ A. PERSONAL NOTES
 **********************************
 
 After some months programming Final Fantasy IX (PSP) codes in MIPS, I decided to take a
-different course and try myself out with one my favorite games, Pokémon HG/SS. It was my very first
+different course and try myself out with one my favorite games, PokÃ©mon HG/SS. It was my very first
 experience coding in ARM/THUMB and I could say it was a positive one. In general, ARM/THUMB is
 not so different from MIPS. The halfword instruction size in THUMB makes the code more compact, but
 it also makes some coding techniques way trickier to pull off. The biggest challenge caused by the
 halfword instruction size, in my opinion, is the short branch range. In fact, bl instructions have
-a range of ±32Mb from the address of the current instruction, which is significantly lower than
+a range of Â±32Mb from the address of the current instruction, which is significantly lower than
 the MIPS branches. The short range forces the programmer to find an unused zero memory
 block very close to the intercepted address. In our case, we were lucky to find a block with
 enough memory space, but I doubt things would run so smooth in other games. Nevertheless, 
