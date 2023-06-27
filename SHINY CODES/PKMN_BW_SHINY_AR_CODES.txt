@@ -1,0 +1,592 @@
+
+ * -----------------------------------------------------------------------*
+ *		  POKÉMON BLACK/WHITE (US VERSION)			  *
+ * 		ACTION REPLAY - LEGAL SHINY POKÉMON ENCOUNTERS		  *	
+ * -----------------------------------------------------------------------*
+ * Programmed in ARM/THUMB and converted to the Action Replay code syntax *
+ * Copyright (C) 2023 Ciro Bogea Fernandes.				  *
+ * email: cirobfes@hotmail.com						  *
+ * -----------------------------------------------------------------------*
+
+**********************************
+COPYRIGHT DISCLAIMER
+**********************************
+
+ * This library is free software. You can redistribute it and/or modify it 
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation;
+
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+ * Permission to use these codes and its documentation *AS IT IS* for any purpose
+ * is hereby granted without fee, provided that the above copyright notice appear 
+ * in all copies and that both that copyright notice and this permission notice appear
+ * in supporting documentation.  It is provided "as is" without express or implied warranty. 
+
+**********************************
+INTRODUCTION
+**********************************
+
+In Pokémon Black/White, the player can find pokémon through a wide variety of 
+forms, such as battles, gifts, eggs and special events. Depending on the type of encounter,
+the game uses a different function to compute the pokémon attributes, based on an ordered
+set of numbers called RNG (random number generator). 
+
+Taking as example the function that calculates the attributes of pokémon found in 
+grass/dungeon areas, the first RNG call prepares the battle module, the second RNG
+decides whether a battle is to be triggered or not, the third RNG is used to define the
+pokémon species (out of a list of ten or eleven encounter slots), the fifth RNG call
+is used to set the so called PID (pokémon identification number) and the sixth RNG
+sets the nature. The PID is the most important number in the pokémon data structure. 
+It is used to define many attributes, like nature, gender and shininess. In Generation V,
+the pokémon IVs are unrelated to the main RNG. Their values are later decided based on 
+another type of RNG called Mersenne Twister RNG.
+
+The routine used for grass/dungeon establishes the stardard pokémon calculation
+in Black/White. This routine is called *Method PIDRNG*. The functions for other 
+encounter types (surfing, fishing, etc.) are variations of the standard Method PIDRNG, with 
+slight modifications. Some may lack the battle trigger RNG call, some may have additional 
+RNG calls, but in the end, they all share the basic pattern described above.
+
+The Action Replay codes in this document intercept the function that calculates the pokémon 
+data structure, advance the RNG until a valid shiny RNG is found and return the code execution 
+to its normal state, to let the game calculate the pokémon based on the shiny RNG. In other
+words, the AR codes force the game to always use RNGs that result in shiny pokémon. The codes 
+*do not* change any other information besides the current RNG. Because of that, any shiny pokémon
+caught while the codes are activated are *100% legal*. The pokémon species, nature, PID, 
+as well as any other attribute, match the results from an existing and obtainable set of
+RNGs in the game.
+
+**********************************
+WARNINGS
+**********************************
+
+Please, read the following notes thoroughly before using the codes.
+
+1. If the leading pokémon in your party has a nature that affects the opposing wild pokémon
+attributes, such as Cute Charm, Synchronize or Pressure, the game executes additional RNG 
+calls to compute those effects. Since the extra RNG calls modify the RNG allignment established
+by our codes, the codes ***DO NOT*** work, if the leading pokémon has a nature with 
+overworld effects.
+
+2. Do not use more than one type of code at the same time in any circunstance. Since the 
+codes write different instruction routines to the same memory block, using more than one code
+may cause crashes and other unexpected behaviours.
+
+3. When the trainer walks on grass, surfs on water, uses the fishing rod ou smashes rocks,
+the game performs a RNG call to define if a battle has to be triggered or not. Each area/action
+has a different encounter rate, as follows:
+3.1. Grass:			08 out of 100, every step.
+3.2. Tall grass:		25 out of 100, every step.
+3.3. Dungeons:			06 out of 100, every step.
+3.4. Surfing:			03 out of 100, every step..
+3.5. Super rod:			50 out of 100, each cast.
+3.6. Sweet scent/Honey:		no encounter check.
+
+If a RNG that does not trigger a battle preceeds a shiny RNG, the shiny RNG is considered 
+invalid, since no pokémon can be fought at all. The lower the encounter rate in the area is,
+the more difficult it is to find a valid shiny RNG. For example, as the player surfs on
+calm water, only 3% of the total amount of shiny RNGs are valid! If the player uses 
+Sweet Scent/Honey to attice wild pokémon, no encounter check is performed, though. Consequently, 
+using Sweet Scent/Honey grants the maximum range of valid shiny RNGs. Sweet Scent/Honey
+has no impact on the chances of getting a pokémon with any specific attribute. Since
+the player can hit any shiny RNG with Sweet Scent/Honey, encounter rates are not taken into 
+consideration to define if a pokémon is legal or not.
+
+If the user wants to disable the encounter rate validation, to get the widest spread of shiny
+RNGs available, do not activate the portion of code separated from the main body by a blank line,
+if it exists. Remember that, without the encounter rate validation, the player will battle 
+pokémon he/she would not normally do, but they are still considered legit. It's really up to
+the user to decide the level of legitimacy he/she wants.
+
+4. The codes add extra computational demand to the game hardware, that is obviously not
+originally programmed. As a consequence, the codes will cause lag. In most cases, the lag 
+is unnoticeable, but it can reach half a second, particularly in low encounter rate areas.
+Disabling the encounter rate validation code portion reduces the lag considerably.
+
+5. Generation V introduces the shiny-lock routine, a function that prevents some pokémon 
+to be shiny. The shiny-locked pokémon are Celebi, Arceus, Victini, Reshiram, Zekrom, Keldeo 
+and Meloetta. If you wish to catch any of these pokémon in its shiny form, the codes below 
+turn the PID type 1 (shiny-lock) routine into PID type 2 (regular PID) routine. Use them 
+in combination with the codes for stationary pokémon, for example, to catch shiny Reshiram 
+or shiny Zekrom. Remember that shiny versions of shiny-locked pokémon are considered illegal
+by all means.
+
+52018724 1c44ffe3
+1201872a 00002002
+121a9d92 00002100
+d0000000 00000000
+
+**********************************
+1. GRASS/DUNGEON/SHAKING GRASS/CAVE SPOT POKÉMON
+**********************************
+
+521aa414 d1002801
+121aa41a 0000f795
+121aa41c 0000fef1
+
+521a9ddc 0000ffff
+121a9de2 0000f796
+121a9de4 0000f90d
+5213fffc 00000000
+02140000 b08cb5f8
+02140004 f904f000
+02140008 68b96878
+0214000c 18406800
+02140010 0c016800
+02140014 0c000400
+02140018 91019000
+0214001c f928f000
+02140020 9e019d00
+02140024 f92cf000
+02140028 f6c52000
+0214002c 1c04fb5f
+02140030 21022001
+02140034 1c220400
+02140038 04094002
+0214003c d0004291
+02140040 1c204044
+02140044 040168fc
+02140048 04210c0b
+0214004c 0c090c22
+02140050 1c1a4051
+02140054 2101404a
+02140058 d0034211
+0214005c 07892102
+02140060 e0014308
+02140064 40086939
+02140068 04000c01
+0214006c 40480c00
+02140070 40704068
+02140074 dad72808
+02140078 f8faf000
+0214007c f8d0f000
+02140080 f8cef000
+02140084 f8ccf000
+02140088 2e00697e
+0214008c f000d007
+02140090 f06af8c7
+02140094 42b0fb25
+02140098 2600d8c2
+0214009c f06a617e
+021400a0 b00cfb1f
+021400a4 0000bdf8
+02140200 f06ab580
+02140204 42a0fa6d
+02140208 4f02d801
+0214020c bd80617c
+02140210 47704f00
+02140214 02140300
+02140220 1c05b538
+02140224 6904480c
+02140228 490d480c
+0214022c 68636822
+02140230 ef10f75b
+02140234 4b0c4a0b
+02140238 414b1810
+0214023c 60636020
+02140240 d1012d00
+02140244 e0056861
+02140248 21006860
+0214024c 1c2a2300
+02140250 ef00f75b
+02140254 bd381c08
+02140258 020aa194
+0214025c 9638806d
+02140260 dedcedae
+02140264 a384e6f9
+02140268 9b1ae6e9
+0214026c 00000000
+02140270 c8066838
+02140274 c006a802
+02140278 00004770
+0214027c 00000000
+02140280 c806a802
+02140284 c0066838
+02140288 00004770
+02140300 02216224
+02140304 02000024
+02140308 0003464c
+0214030c 03f1137a
+02140310 7fffffff
+d0000000 00000000
+
+**********************************
+2. STARTERS/STATIONARY/FOSSIL POKÉMON
+**********************************
+   2.1. Codes must be active when you select your starter.
+   2.2. Stationary pokémon are wild pokémon with overworld sprites: Cobalion, 
+	Terrakion, Virizion, Kyurem, Volcarona, Darmanitan (Zen Mode), Musharna
+	(Telepathy), Foongus and Ammonguss (as pokéballs in Routes 6 and 10). 
+   2.3. Codes must be active when you revive the fossil in Nacrene City Museum.
+**********************************
+
+520186d4 2000d104
+020186d8 fc82f127
+02140000 b08cb5f8
+02140004 f904f000
+02140008 68b96878
+0214000c 18406800
+02140010 0c016800
+02140014 0c000400
+02140018 91019000
+0214001c f928f000
+02140020 9e019d00
+02140024 f92cf000
+02140028 f6c52000
+0214002c 1c04fb5f
+02140030 21022001
+02140034 1c220400
+02140038 04094002
+0214003c d0004291
+02140040 1c204044
+02140044 040168fc
+02140048 04210c0b
+0214004c 0c090c22
+02140050 1c1a4051
+02140054 2101404a
+02140058 d0034211
+0214005c 07892102
+02140060 e0014308
+02140064 40086939
+02140068 04000c01
+0214006c 40480c00
+02140070 40704068
+02140074 dad72808
+02140078 f8faf000
+0214007c f8d0f000
+02140080 f6c52000
+02140084 b00cfb33
+02140088 0000bdf8
+02140200 f06ab580
+02140204 42a0fa6d
+02140208 4f02d801
+0214020c bd80617c
+02140210 47704f00
+02140214 02140300
+02140220 1c05b538
+02140224 6904480c
+02140228 490d480c
+0214022c 68636822
+02140230 ef10f75b
+02140234 4b0c4a0b
+02140238 414b1810
+0214023c 60636020
+02140240 d1012d00
+02140244 e0056861
+02140248 21006860
+0214024c 1c2a2300
+02140250 ef00f75b
+02140254 bd381c08
+02140258 020aa194
+0214025c 9638806d
+02140260 dedcedae
+02140264 a384e6f9
+02140268 9b1ae6e9
+0214026c 00000000
+02140270 c8066838
+02140274 c006a802
+02140278 00004770
+0214027c 00000000
+02140280 c806a802
+02140284 c0066838
+02140288 00004770
+02140300 02216224
+02140304 02000024
+02140308 0003464c
+0214030c 03f1137a
+02140310 7fffffff
+d0000000 00000000
+
+**********************************
+3. ROAMING POKÉMON/LARVESTA EGG
+**********************************
+   3.1. The roaming pokémon are Thundurus and Tornadus. Codes must be active during 
+	thunderstorm cutscene in Route 7.
+   3.2. Codes must be active when you receive the Larvesta egg.	
+**********************************
+
+5201765c 2000d108
+02017660 fccef128
+02140000 b08cb5f8
+02140004 f904f000
+02140008 68b96878
+0214000c 18406800
+02140010 0c016800
+02140014 0c000400
+02140018 91019000
+0214001c f928f000
+02140020 9e019d00
+02140024 f92cf000
+02140028 f6c52000
+0214002c 0c04fb5f
+02140030 0c1b0403
+02140034 406b4063
+02140038 2b084073
+0214003c f000daf4
+02140040 f000f917
+02140044 2000f8ed
+02140048 fb50f6c5
+0214004c bdf8b00c
+02140200 f06ab580
+02140204 42a0fa6d
+02140208 4f02d801
+0214020c bd80617c
+02140210 47704f00
+02140214 02140300
+02140220 1c05b538
+02140224 6904480c
+02140228 490d480c
+0214022c 68636822
+02140230 ef10f75b
+02140234 4b0c4a0b
+02140238 414b1810
+0214023c 60636020
+02140240 d1012d00
+02140244 e0056861
+02140248 21006860
+0214024c 1c2a2300
+02140250 ef00f75b
+02140254 bd381c08
+02140258 020aa194
+0214025c 9638806d
+02140260 dedcedae
+02140264 a384e6f9
+02140268 9b1ae6e9
+0214026c 00000000
+02140270 c8066838
+02140274 c006a802
+02140278 00004770
+0214027c 00000000
+02140280 c806a802
+02140284 c0066838
+02140288 00004770
+02140300 02216224
+02140304 02000024
+02140308 0003464c
+0214030c 03f1137a
+02140310 7fffffff
+d0000000 00000000
+
+**********************************
+4. SURFING/BUBBLE SPOT
+**********************************
+
+521aa414 d1002801
+121aa41a 0000f795
+121aa41c 0000fef1
+
+521a9e60 bd08200b
+121a9e66 0000f796
+121a9e68 0000f8cb
+02140000 b08cb5f8
+02140004 f904f000
+02140008 68b96878
+0214000c 18406800
+02140010 0c016800
+02140014 0c000400
+02140018 91019000
+0214001c f928f000
+02140020 9e019d00
+02140024 f92cf000
+02140028 f6c52000
+0214002c 1c04fb5f
+02140030 21022001
+02140034 1c220400
+02140038 04094002
+0214003c d0004291
+02140040 1c204044
+02140044 040168fc
+02140048 04210c0b
+0214004c 0c090c22
+02140050 1c1a4051
+02140054 2101404a
+02140058 d0034211
+0214005c 07892102
+02140060 e0014308
+02140064 40086939
+02140068 04000c01
+0214006c 40480c00
+02140070 40704068
+02140074 dad72808
+02140078 f8faf000
+0214007c f8d0f000
+02140080 f8cef000
+02140084 f8ccf000
+02140088 2e00697e
+0214008c f000d007
+02140090 f06af8c7
+02140094 42b0fb25
+02140098 2600d8c2
+0214009c f06a617e
+021400a0 b00cfb1f
+021400a4 0000bdf8
+02140200 f06ab580
+02140204 42a0fa6d
+02140208 4f02d801
+0214020c bd80617c
+02140210 47704f00
+02140214 02140300
+02140220 1c05b538
+02140224 6904480c
+02140228 490d480c
+0214022c 68636822
+02140230 ef10f75b
+02140234 4b0c4a0b
+02140238 414b1810
+0214023c 60636020
+02140240 d1012d00
+02140244 e0056861
+02140248 21006860
+0214024c 1c2a2300
+02140250 ef00f75b
+02140254 bd381c08
+02140258 020aa194
+0214025c 9638806d
+02140260 dedcedae
+02140264 a384e6f9
+02140268 9b1ae6e9
+0214026c 00000000
+02140270 c8066838
+02140274 c006a802
+02140278 00004770
+0214027c 00000000
+02140280 c806a802
+02140284 c0066838
+02140288 00004770
+02140300 02216224
+02140304 02000024
+02140308 0003464c
+0214030c 03f1137a
+02140310 7fffffff
+d0000000 00000000
+
+**********************************
+5. FISHING (SUPER ROD)
+**********************************
+
+521aa1dc 1c04f969
+021aa1e0 f80ef796
+521a9e94 bd082004
+121a9e9a 0000f796
+121a9e9c 0000f8b1
+02140000 b08cb5f8
+02140004 f904f000
+02140008 68b96878
+0214000c 18406800
+02140010 0c016800
+02140014 0c000400
+02140018 91019000
+0214001c f928f000
+02140020 9e019d00
+02140024 f92cf000
+02140028 f6c52000
+0214002c 1c04fb5f
+02140030 21022001
+02140034 1c220400
+02140038 04094002
+0214003c d0004291
+02140040 1c204044
+02140044 040168fc
+02140048 04210c0b
+0214004c 0c090c22
+02140050 1c1a4051
+02140054 2101404a
+02140058 d0034211
+0214005c 07892102
+02140060 e0014308
+02140064 40086939
+02140068 04000c01
+0214006c 40480c00
+02140070 40704068
+02140074 dad72808
+02140078 f8faf000
+0214007c f8d0f000
+02140080 f8cef000
+02140084 f8ccf000
+02140088 2e00697e
+0214008c f000d007
+02140090 f06af8c7
+02140094 42b0fb25
+02140098 2600d8c2
+0214009c f06a617e
+021400a0 b00cfb1f
+021400a4 0000bdf8
+02140200 f06ab580
+02140204 42a0fa6d
+02140208 4f02d801
+0214020c bd80617c
+02140210 47704f00
+02140214 02140300
+02140220 1c05b538
+02140224 6904480c
+02140228 490d480c
+0214022c 68636822
+02140230 ef10f75b
+02140234 4b0c4a0b
+02140238 414b1810
+0214023c 60636020
+02140240 d1012d00
+02140244 e0056861
+02140248 21006860
+0214024c 1c2a2300
+02140250 ef00f75b
+02140254 bd381c08
+02140258 020aa194
+0214025c 9638806d
+02140260 dedcedae
+02140264 a384e6f9
+02140268 9b1ae6e9
+0214026c 00000000
+02140270 c8066838
+02140274 c006a802
+02140278 00004770
+0214027c 00000000
+02140280 c806a802
+02140284 c0066838
+02140288 00004770
+02140300 02216224
+02140304 02000024
+02140308 0003464c
+0214030c 03f1137a
+02140310 7fffffff
+d0000000 00000000
+
+**********************************
+A. PERSONAL NOTES
+**********************************
+
+After some months programming Final Fantasy IX (PSP) codes in MIPS, I decided to take a
+different course and try myself out with one my favorite games, Pokémon HG/SS. It was my very first
+experience coding in ARM/THUMB and I could say it was a positive one. In general, ARM/THUMB is
+not so different from MIPS. The halfword instruction size in THUMB makes the code more compact, but
+it also makes some coding techniques way trickier to pull off. The biggest challenge caused by the
+halfword instruction size, in my opinion, is the short branch range. In fact, bl instructions have
+a range of ±32Mb from the address of the current instruction, which is significantly lower than
+the MIPS branches. The short range forces the programmer to find an unused zero memory
+block very close to the intercepted address. In our case, we were lucky to find a block with
+enough memory space, but I doubt things would run so smooth in other games. Nevertheless, 
+putting this issue aside, ARM/THUMB is objectively easier to read, write and modify than MIPS.
+
+Quite often, I stumble upon comments of people who consider GameShark/Action Replay codes
+a bad pratice, labeling them as cheating or even hacking. Such opinions make me somewhat sad,
+because they are based on critically flawed misconceptions, that reflect how poor our educational
+systems are. GameShark/Action Replay codes are in fact machine language, just like MIPS and ARM/THUMB.
+The same way a person learns a programming language, like C or Java, he/she can acquire
+the proper knowledge to read and write GameShark/Action Replay. Creating codes is equivalent to
+programming.
+
+I strongly encourage all readers to learn machine language. It's easy, it's accessible, it's fun. 
+Do not get carried away by all weird symbols and terminology. There are very few instructions 
+to learn: mov, ldr/str, ldmia/stmia, b, cmp, push/pop, the logical (lsl, lsr, and, orr, eor) and 
+the mathematical (add, sub, rsub, mul) operations, nothing more, nothing less. Consider learning 
+machine code like learning a language with only a handful of words. I am positive anyone can aquire
+very satisfactory skills in just a couple of days. The time investiment is totally worth it. 
+The knowledge on machine language will allow you to play and enjoy your favourite games on a brand
+new level, like you never did in your life. 
+
+If you want to reach me, send me an email to cirobfes@hotmail.com
+
+EOF
