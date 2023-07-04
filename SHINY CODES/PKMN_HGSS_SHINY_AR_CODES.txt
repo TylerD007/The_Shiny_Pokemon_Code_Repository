@@ -1,0 +1,1314 @@
+
+ * -----------------------------------------------------------------------*
+ *		  POKÉMON HEARTGOLD/SOULSILVER (US VERSION)		  *
+ * 		ACTION REPLAY - LEGAL SHINY POKÉMON ENCOUNTERS		  *	
+ * -----------------------------------------------------------------------*
+ * Programmed in ARM/THUMB and converted to the Action Replay code syntax *
+ * Copyright (C) 2023 Ciro Bogea Fernandes.				  *
+ * email: cirobfes@hotmail.com						  *
+ * -----------------------------------------------------------------------*
+
+**********************************
+COPYRIGHT DISCLAIMER
+**********************************
+
+ * This library is free software. You can redistribute it and/or modify it 
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation;
+
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+ * Permission to use these codes and its documentation *AS IT IS* for any purpose
+ * is hereby granted without fee, provided that the above copyright notice appear 
+ * in all copies and that both that copyright notice and this permission notice appear
+ * in supporting documentation.  It is provided "as is" without express or implied warranty. 
+
+**********************************
+INTRODUCTION
+**********************************
+
+In Pokémon HeartGold/SoulSilver, the player can find wild pokémon through a wide variety of 
+forms, such as battles, gifts, eggs and special events. Depending on the type of encounter,
+the game uses a different function to compute the pokémon attributes, based on a ordered set
+of numbers given by a function called RNG (random number generator). The main RNG in 
+the 4th generation games is the linear formula:
+
+next RNG = (current RNG * 0x41c64e6d) + 0x6073
+
+On each step on a grass area, the game calls the RNG twice to decide if a battle is to
+be triggered or not. If the battle starts, the game calculates the attributes of the
+opposing pokémon. The third RNG call is used to select the pokémon species out of a list of
+ten or eleven encounter slots and the fourth RNG sets the nature. Then, the game enters 
+a loop state, calling the RNG twice on each cycle, to produce the so called PID (pokémon 
+identification number). The PID is the most important number in the pokémon data structure. 
+It is used to define many aspects of the pokémon, like nature, gender, shininess and many 
+others. When the game finds a PID, whose correspondent nature is equal to the nature set in
+the fourth RNG call, the function breaks the loop. Finally, the last two RNG calls define
+the pokémon IVs.
+
+The routine used for grass/dungeon areas establishes the stardard pokémon calculation
+in HeartGold/SoulSilver. This routine is called *Method K*. The functions for other 
+encounter types (surfing, fishing, etc.) are variations of the standard Method K, with 
+slight modifications. Some may lack the battle trigger RNG calls, some may have additional 
+RNG calls, some may even loop the entire routine a set amount of times, but in the end, 
+they all share the basic pattern described above.
+
+The Action Replay codes in this document intercept the function that calculates the pokémon 
+data structure, advance the RNG until a valid shiny RNG is found and return the code execution 
+to its normal state, to let the game calculate the pokémon based on the shiny RNG. In other
+words, the AR codes force the game to always use RNGs that result in shiny pokémon. The codes 
+*do not* change any other information besides the current RNG. Because of that, any shiny pokémon
+caught while the codes are activated are *100% legal*. The pokémon species, nature, PID, 
+IVs, as well as any other attribute, match the results from an existing and obtainable set of
+RNGs in the game.
+
+**********************************
+WARNINGS
+**********************************
+
+Please, read the following notes thoroughly before using the codes.
+
+1. If the leading pokémon in your party has a nature that affects the opposing wild pokémon
+attributes, such as Cute Charm, Synchronize or Pressure, the game executes additional RNG 
+calls to compute those effects. Since the extra RNG calls modify the RNG allignment established
+by our codes, the codes ***DO NOT*** work, if the leading pokémon has a nature with 
+overworld effects.
+
+2. Do not use more than one type of code at the same time in any circunstance. Since the 
+codes write different instruction routines to the same memory block, using more than one code
+may cause crashes and other unexpected behaviours.
+
+3. When the trainer walks on grass areas or dungeons or surfs on water, the game calls the RNG
+and generates a number from 0 to 99. If the number is greater or equal to the first encounter 
+rate, no battle is triggered. The first encounter rate is variable and increases after a certain
+number of steps, but only when the trainer turns around and starts walking on a different 
+direction. If the trainer does not change directions, the first encounter rate remains unaffected.
+That means that the less the player make turns, the less likely to find wild pokémon. The first
+encounter rates are 40, 70, 80 and 100. If the RNG generated number is less than the first 
+encounter rate, the game calls the RNG again and generates another number from 0 to 99. 
+If the number is greater or equal to the second encounter rate, no battle is triggered. 
+The second encounter rate is constant and relates to the area the player is at:
+
+3.1. Grass:			25
+3.2. Grass (safari zone):	20
+3.3. Dungeons (low rate):	05
+3.4. Dungeons (high rate):	10
+3.5. Surfing:			10
+3.6. Surfing (safari zone):	15
+
+Fishing and rock smashing also prompt a RNG call to decide for a battle based on a fixed
+encounter rate:
+
+3.4. Old rod:			75
+3.5. Good rod:			100
+3.6. Super rod:			100
+3.7. Rock smash:		30
+
+If the trainer uses Sweet Scent/Honey to attice wild pokémon, no encounter check is performed.
+
+If the random numbers that preceed a shiny RNG do not trigger a battle due to the encounter 
+rates, the AR codes in this document will discard the shiny RNG and search for another one. Hence,
+the lower the encounter rate in the area is, the more difficult it is to find a usable shiny RNG. 
+Since Sweet Scent/Honey ignores encounter checks, using them grants the maximum range of usable
+shiny RNGs.
+
+The user has the option to disable the encounter rate validation completely, by simply
+not activating the portion of code separated from the main body by a blank line, if it exists. 
+Remember that, without the encounter rate validation, the player will battle pokémon he/she would 
+not normally do. It's important to underline that the pokémon community disconsiders encounter rates
+when checking the pokémon legitimacy. The reason is that any RNG could be hit with Sweet Scent/Honey. 
+I personally dissent, because Sweet Scent/Honey cannot be used in all circunstances, for instance,
+under the permanent rainy weather on Route 33. It's really up to the user to decide the level of 
+legitimacy he/she wants.
+
+4. The codes add extra computational demand to the game hardware, that is obviously not
+originally programmed. As a consequence, the codes will cause lag. In most cases, the lag is
+unnoticeable, but it can reach a full second, particularly in low encounter rate areas.
+Using Sweet Scent/Honey or disabling the encounter rate validation code portion reduces the 
+lag considerably.
+
+**********************************
+1. GRASS/DUNGEON POKÉMON
+**********************************
+
+522475e8 fbacf5d8
+122475ee 0000f6ca
+122475f0 0000fa87
+52247670 fb68f5d8
+12247676 0000f6ca
+12247678 0000fa43
+
+52247688 0000bd10
+1224768e 0000f6ca
+12247690 0000fab7
+02111b00 f7e0b5e0
+02111b04 0409ef4a
+02111b08 f0000c09
+02111b0c 683ff979
+02111b10 42a1683e
+02111b14 2500d305
+02111b18 3e0451bd
+02111b1c dafb2e00
+02111b20 3604e002
+02111b24 603e51bc
+02111b28 0000bde0
+02111c00 b08cb5f0
+02111c04 f8fcf000
+02111c08 21846878
+02111c0c 18406800
+02111c10 0c016800
+02111c14 0c000400
+02111c18 91019000
+02111c1c 680168b8
+02111c20 9d009102
+02111c24 68b89e01
+02111c28 60019902
+02111c2c 1c040c08
+02111c30 f888f70e
+02111c34 40611c01
+02111c38 40714069
+02111c3c daf62908
+02111c40 680168b8
+02111c44 f70e9102
+02111c48 f000f87d
+02111c4c 0405f8e1
+02111c50 f8def000
+02111c54 21194328
+02111c58 efa4f7e0
+02111c5c 0e000608
+02111c60 f0001c04
+02111c64 0405f8d5
+02111c68 f7e02119
+02111c6c 0608ee96
+02111c70 42a00e00
+02111c74 f000d00a
+02111c78 4328f8cb
+02111c7c f7e02119
+02111c80 0608ef92
+02111c84 42a00e00
+02111c88 e7ead0cb
+02111c8c f8c0f000
+02111c90 6835683e
+02111c94 d00b2d00
+02111c98 f8baf000
+02111c9c f7e02164
+02111ca0 0408ee7c
+02111ca4 59740c00
+02111ca8 d2ba42a0
+02111cac e7f13d04
+02111cb0 68352400
+02111cb4 d0042d00
+02111cb8 f844f70e
+02111cbc 3d045174
+02111cc0 6034e7f8
+02111cc4 bdf0b00c
+02111e00 47704f00
+02111e04 02111f00
+02111e10 480568b9
+02111e14 1c13680a
+02111e18 48044343
+02111e1c 600818c0
+02111e20 04000c00
+02111e24 47700c00
+02111e28 eeb9eb65
+02111e2c 0a3561a1
+02111e30 f7ffb500
+02111e34 211fffed
+02111e38 223e4001
+02111e3c 40020112
+02111e40 231f0952
+02111e44 4003029b
+02111e48 bd000a9b
+02111f00 02111b50
+02111f04 02111880
+02111f08 021d15a8
+d0000000 00000000
+
+**********************************
+2. STATIONARY POKÉMON
+**********************************
+   2.1. Stationary pokémon are wild pokémon with overworld sprites: Sudowoodo, Lapras,
+	Electrodes in Rocket Hideout, Lugia, Ho-oh, Snorlax, Suicune, the legendary
+	birds, Mewtwo, Groudon, Kyogre and Rayquaza. Codes must be activated when
+	you interact with the pokémon.
+**********************************
+
+5224788c bd100e00
+02247890 f9b6f6ca
+02111c00 b08cb5f0
+02111c04 f8fcf000
+02111c08 21846878
+02111c0c 18406800
+02111c10 0c016800
+02111c14 0c000400
+02111c18 91019000
+02111c1c 680168b8
+02111c20 9d009102
+02111c24 68b89e01
+02111c28 60019902
+02111c2c 1c040c08
+02111c30 f888f70e
+02111c34 40611c01
+02111c38 40714069
+02111c3c daf62908
+02111c40 680168b8
+02111c44 f70e9102
+02111c48 f000f87d
+02111c4c 0405f8e1
+02111c50 f8def000
+02111c54 21194328
+02111c58 efa4f7e0
+02111c5c 0e000608
+02111c60 f0001c04
+02111c64 0405f8d5
+02111c68 f7e02119
+02111c6c 0608ee96
+02111c70 42a00e00
+02111c74 f000d00a
+02111c78 4328f8cb
+02111c7c f7e02119
+02111c80 0608ef92
+02111c84 42a00e00
+02111c88 e7ead0cb
+02111c8c f8c0f000
+02111c90 f858f70e
+02111c94 bdf0b00c
+02111e00 47704f00
+02111e04 02111f00
+02111e10 480568b9
+02111e14 1c13680a
+02111e18 48044343
+02111e1c 600818c0
+02111e20 04000c00
+02111e24 47700c00
+02111e28 eeb9eb65
+02111e2c 0a3561a1
+02111e30 f7ffb500
+02111e34 211fffed
+02111e38 223e4001
+02111e3c 40020112
+02111e40 231f0952
+02111e44 4003029b
+02111e48 bd000a9b
+02111f00 02111b50
+02111f04 02111880
+02111f08 021d15a8
+d0000000 00000000
+
+**********************************
+3. STARTERS/ROAMING/FOSSIL/GIFT POKÉMON
+**********************************
+   3.1. Starters, roaming, fossil and gift pokémon are calculated according to Method 1.
+   3.2. Starters are the Johto, Kanto and Hoenn starter trios. Codes must be activated
+	when you choose the pokémon.
+   3.3. Roaming pokémon are Raikou, Entei, Latios and Latias. Codes must be activated when
+	the trainer wakes up Raikou and Entei in the Burned Tower or when the trainer leaves
+	the Pokémon Fan Club in Vermillion City and Steve tells a legendary pokémon started
+	roaming Kanto.
+   3.4. Codes must be activated when you revive the fossil pokémon in Pewter City.
+   3.5. Gift pokémon are Togepi received from Prof. Elm's assistent, Eevee received from
+	Bill and ExtremeSpeed Dratini received in the Dragon's Den. Codes must be activated
+	when you receive the pokémon.
+**********************************
+
+5206dee4 2800980c
+1206deea 0000f0a3
+1206deec 0000fe89
+02111c00 b08cb5f0
+02111c04 f8fcf000
+02111c08 21846878
+02111c0c 18406800
+02111c10 0c016800
+02111c14 0c000400
+02111c18 91019000
+02111c1c 680168b8
+02111c20 9d009102
+02111c24 68b89e01
+02111c28 60019902
+02111c2c 1c040c08
+02111c30 f888f70e
+02111c34 40611c01
+02111c38 40714069
+02111c3c daf62908
+02111c40 680168b8
+02111c44 f0009102
+02111c48 b00cf8e3
+02111c4c 0000bdf0
+02111e00 47704f00
+02111e04 02111f00
+02111e10 480568b9
+02111e14 1c13680a
+02111e18 48044343
+02111e1c 600818c0
+02111e20 04000c00
+02111e24 47700c00
+02111e28 eeb9eb65
+02111e2c 0a3561a1
+02111e30 f7ffb500
+02111e34 211fffed
+02111e38 223e4001
+02111e3c 40020112
+02111e40 231f0952
+02111e44 4003029b
+02111e48 bd000a9b
+02111f00 02111b50
+02111f04 02111880
+02111f08 021d15a8
+d0000000 00000000
+
+**********************************
+4. SURFING
+**********************************
+
+522475e8 fbacf5d8
+122475ee 0000f6ca
+122475f0 0000fa87
+52247670 fb68f5d8
+12247676 0000f6ca
+12247678 0000fa43
+
+5224771c 0000bd08
+12247722 0000f6ca
+12247724 0000fa6d
+02111b00 f7e0b5e0
+02111b04 0409ef4a
+02111b08 f0000c09
+02111b0c 683ff979
+02111b10 42a1683e
+02111b14 2500d305
+02111b18 3e0451bd
+02111b1c dafb2e00
+02111b20 3604e002
+02111b24 603e51bc
+02111b28 0000bde0
+02111c00 b08cb5f0
+02111c04 f8fcf000
+02111c08 21846878
+02111c0c 18406800
+02111c10 0c016800
+02111c14 0c000400
+02111c18 91019000
+02111c1c 680168b8
+02111c20 9d009102
+02111c24 68b89e01
+02111c28 60019902
+02111c2c 1c040c08
+02111c30 f888f70e
+02111c34 40611c01
+02111c38 40714069
+02111c3c daf62908
+02111c40 680168b8
+02111c44 f70e9102
+02111c48 f000f87d
+02111c4c 0405f8e1
+02111c50 f8def000
+02111c54 21194328
+02111c58 efa4f7e0
+02111c5c 0e000608
+02111c60 f0001c04
+02111c64 0405f8d5
+02111c68 f7e02119
+02111c6c 0608ee96
+02111c70 42a00e00
+02111c74 f000d00a
+02111c78 4328f8cb
+02111c7c f7e02119
+02111c80 0608ef92
+02111c84 42a00e00
+02111c88 e7ead0cb
+02111c8c f8c0f000
+02111c90 f8bef000
+02111c94 6835683e
+02111c98 d00b2d00
+02111c9c f8b8f000
+02111ca0 f7e02164
+02111ca4 0408ee7a
+02111ca8 59740c00
+02111cac d2b842a0
+02111cb0 e7f13d04
+02111cb4 68352400
+02111cb8 d0042d00
+02111cbc f842f70e
+02111cc0 3d045174
+02111cc4 6034e7f8
+02111cc8 bdf0b00c
+02111e00 47704f00
+02111e04 02111f00
+02111e10 480568b9
+02111e14 1c13680a
+02111e18 48044343
+02111e1c 600818c0
+02111e20 04000c00
+02111e24 47700c00
+02111e28 eeb9eb65
+02111e2c 0a3561a1
+02111e30 f7ffb500
+02111e34 211fffed
+02111e38 223e4001
+02111e3c 40020112
+02111e40 231f0952
+02111e44 4003029b
+02111e48 bd000a9b
+02111f00 02111b50
+02111f04 02111880
+02111f08 021d15a8
+d0000000 00000000
+
+**********************************
+5. FISHING (OLD, GOOD OR SUPER ROD)
+**********************************
+
+52246fc4 2164febf
+02246fc8 fd9af6ca
+52247760 0000bd08
+12247766 0000f6ca
+12247768 0000fa4b
+02111b00 f7e0b5e0
+02111b04 0409ef4a
+02111b08 f0000c09
+02111b0c 683ff979
+02111b10 42a1683e
+02111b14 2500d305
+02111b18 3e0451bd
+02111b1c dafb2e00
+02111b20 3604e002
+02111b24 603e51bc
+02111b28 0000bde0
+02111c00 b08cb5f0
+02111c04 f8fcf000
+02111c08 21846878
+02111c0c 18406800
+02111c10 0c016800
+02111c14 0c000400
+02111c18 91019000
+02111c1c 680168b8
+02111c20 9d009102
+02111c24 68b89e01
+02111c28 60019902
+02111c2c 1c040c08
+02111c30 f888f70e
+02111c34 40611c01
+02111c38 40714069
+02111c3c daf62908
+02111c40 680168b8
+02111c44 f70e9102
+02111c48 f000f87d
+02111c4c 0405f8e1
+02111c50 f8def000
+02111c54 21194328
+02111c58 efa4f7e0
+02111c5c 0e000608
+02111c60 f0001c04
+02111c64 0405f8d5
+02111c68 f7e02119
+02111c6c 0608ee96
+02111c70 42a00e00
+02111c74 f000d00a
+02111c78 4328f8cb
+02111c7c f7e02119
+02111c80 0608ef92
+02111c84 42a00e00
+02111c88 e7ead0cb
+02111c8c f8c0f000
+02111c90 f8bef000
+02111c94 6835683e
+02111c98 d00b2d00
+02111c9c f8b8f000
+02111ca0 f7e02164
+02111ca4 0408ee7a
+02111ca8 59740c00
+02111cac d2b842a0
+02111cb0 e7f13d04
+02111cb4 68352400
+02111cb8 d0042d00
+02111cbc f842f70e
+02111cc0 3d045174
+02111cc4 6034e7f8
+02111cc8 bdf0b00c
+02111e00 47704f00
+02111e04 02111f00
+02111e10 480568b9
+02111e14 1c13680a
+02111e18 48044343
+02111e1c 600818c0
+02111e20 04000c00
+02111e24 47700c00
+02111e28 eeb9eb65
+02111e2c 0a3561a1
+02111e30 f7ffb500
+02111e34 211fffed
+02111e38 223e4001
+02111e3c 40020112
+02111e40 231f0952
+02111e44 4003029b
+02111e48 bd000a9b
+02111f00 02111b50
+02111f04 02111880
+02111f08 021d15a8
+d0000000 00000000
+
+**********************************
+6. HEADBUTT
+**********************************
+
+522477bc bd080e00
+122477c2 0000f6ca
+122477c4 0000fa1d
+02111b00 f7e0b5e0
+02111b04 0409ef4a
+02111b08 f0000c09
+02111b0c 683ff979
+02111b10 42a1683e
+02111b14 2500d305
+02111b18 3e0451bd
+02111b1c dafb2e00
+02111b20 3604e002
+02111b24 603e51bc
+02111b28 0000bde0
+02111c00 b08cb5f0
+02111c04 f8fcf000
+02111c08 21846878
+02111c0c 18406800
+02111c10 0c016800
+02111c14 0c000400
+02111c18 91019000
+02111c1c 680168b8
+02111c20 9d009102
+02111c24 68b89e01
+02111c28 60019902
+02111c2c 1c040c08
+02111c30 f888f70e
+02111c34 40611c01
+02111c38 40714069
+02111c3c daf62908
+02111c40 680168b8
+02111c44 f70e9102
+02111c48 f000f87d
+02111c4c 0405f8e1
+02111c50 f8def000
+02111c54 21194328
+02111c58 efa4f7e0
+02111c5c 0e000608
+02111c60 f0001c04
+02111c64 0405f8d5
+02111c68 f7e02119
+02111c6c 0608ee96
+02111c70 42a00e00
+02111c74 f000d00a
+02111c78 4328f8cb
+02111c7c f7e02119
+02111c80 0608ef92
+02111c84 42a00e00
+02111c88 e7ead0cb
+02111c8c f8c0f000
+02111c90 f8bef000
+02111c94 6835683e
+02111c98 d00b2d00
+02111c9c f8b8f000
+02111ca0 f7e02164
+02111ca4 0408ee7a
+02111ca8 59740c00
+02111cac d2b842a0
+02111cb0 e7f13d04
+02111cb4 68352400
+02111cb8 d0042d00
+02111cbc f842f70e
+02111cc0 3d045174
+02111cc4 6034e7f8
+02111cc8 bdf0b00c
+02111e00 47704f00
+02111e04 02111f00
+02111e10 480568b9
+02111e14 1c13680a
+02111e18 48044343
+02111e1c 600818c0
+02111e20 04000c00
+02111e24 47700c00
+02111e28 eeb9eb65
+02111e2c 0a3561a1
+02111e30 f7ffb500
+02111e34 211fffed
+02111e38 223e4001
+02111e3c 40020112
+02111e40 231f0952
+02111e44 4003029b
+02111e48 bd000a9b
+02111f00 02111b50
+02111f04 02111880
+02111f08 021d15a8
+d0000000 00000000
+
+**********************************
+7. ROCK SMASH
+**********************************
+
+522470f4 2164fe27
+022470f8 fd02f6ca
+52247798 bd082004
+1224779e 0000f6ca
+122477a0 0000fa2f
+02111b00 f7e0b5e0
+02111b04 0409ef4a
+02111b08 f0000c09
+02111b0c 683ff979
+02111b10 42a1683e
+02111b14 2500d305
+02111b18 3e0451bd
+02111b1c dafb2e00
+02111b20 3604e002
+02111b24 603e51bc
+02111b28 0000bde0
+02111c00 b08cb5f0
+02111c04 f8fcf000
+02111c08 21846878
+02111c0c 18406800
+02111c10 0c016800
+02111c14 0c000400
+02111c18 91019000
+02111c1c 680168b8
+02111c20 9d009102
+02111c24 68b89e01
+02111c28 60019902
+02111c2c 1c040c08
+02111c30 f888f70e
+02111c34 40611c01
+02111c38 40714069
+02111c3c daf62908
+02111c40 680168b8
+02111c44 f70e9102
+02111c48 f000f87d
+02111c4c 0405f8e1
+02111c50 f8def000
+02111c54 21194328
+02111c58 efa4f7e0
+02111c5c 0e000608
+02111c60 f0001c04
+02111c64 0405f8d5
+02111c68 f7e02119
+02111c6c 0608ee96
+02111c70 42a00e00
+02111c74 f000d00a
+02111c78 4328f8cb
+02111c7c f7e02119
+02111c80 0608ef92
+02111c84 42a00e00
+02111c88 e7ead0cb
+02111c8c f8c0f000
+02111c90 f8bef000
+02111c94 6835683e
+02111c98 d00b2d00
+02111c9c f8b8f000
+02111ca0 f7e02164
+02111ca4 0408ee7a
+02111ca8 59740c00
+02111cac d2b842a0
+02111cb0 e7f13d04
+02111cb4 68352400
+02111cb8 d0042d00
+02111cbc f842f70e
+02111cc0 3d045174
+02111cc4 6034e7f8
+02111cc8 bdf0b00c
+02111e00 47704f00
+02111e04 02111f00
+02111e10 480568b9
+02111e14 1c13680a
+02111e18 48044343
+02111e1c 600818c0
+02111e20 04000c00
+02111e24 47700c00
+02111e28 eeb9eb65
+02111e2c 0a3561a1
+02111e30 f7ffb500
+02111e34 211fffed
+02111e38 223e4001
+02111e3c 40020112
+02111e40 231f0952
+02111e44 4003029b
+02111e48 bd000a9b
+02111f00 02111b50
+02111f04 02111880
+02111f08 021d15a8
+d0000000 00000000
+
+**********************************
+8. BUG-CATCHING CONTEST
+**********************************
+   8.1. The bug-catching contest, as well as the safari zone, host a very peculiar Method K
+	variation. The game attemps four times to create a pokémon with 31 IV in at least
+	one stat. If it fails, the last pokémon created is selected. Curiously, the safari
+	zone in DPPl does not display the same feature.
+**********************************
+
+522475e8 fbacf5d8
+122475ee 0000f6ca
+122475f0 0000fa87
+52247670 fb68f5d8
+12247676 0000f6ca
+12247678 0000fa43
+
+52247ee0 fe22f625
+12247ee6 0000f6c9
+12247ee8 0000fe8b
+02111b00 f7e0b5e0
+02111b04 0409ef4a
+02111b08 f0000c09
+02111b0c 683ff979
+02111b10 42a1683e
+02111b14 2500d305
+02111b18 3e0451bd
+02111b1c dafb2e00
+02111b20 3604e002
+02111b24 603e51bc
+02111b28 0000bde0
+02111c00 b08cb5ff
+02111c04 f8fcf000
+02111c08 21846878
+02111c0c 18406800
+02111c10 0c016800
+02111c14 0c000400
+02111c18 91019000
+02111c1c 680168b8
+02111c20 9d009102
+02111c24 68b89e01
+02111c28 60019902
+02111c2c 1c040c08
+02111c30 f888f70e
+02111c34 40611c01
+02111c38 40714069
+02111c3c daf62908
+02111c40 680168b8
+02111c44 f70e9102
+02111c48 f70ef87d
+02111c4c f70ef87b
+02111c50 2600f879
+02111c54 f0002500
+02111c58 291ff8eb
+02111c5c 3501d100
+02111c60 d1002a1f
+02111c64 2b1f3501
+02111c68 3501d100
+02111c6c f8e0f000
+02111c70 d100291f
+02111c74 2a1f3501
+02111c78 3501d100
+02111c7c d1002b1f
+02111c80 95043501
+02111c84 f8c4f000
+02111c88 f0000405
+02111c8c 4328f8c1
+02111c90 f7e02119
+02111c94 0608ef88
+02111c98 1c040e00
+02111c9c f8b8f000
+02111ca0 21190405
+02111ca4 ee78f7e0
+02111ca8 0e000608
+02111cac d00a42a0
+02111cb0 f8aef000
+02111cb4 21194328
+02111cb8 ef74f7e0
+02111cbc 0e000608
+02111cc0 d0ae42a0
+02111cc4 3601e7ea
+02111cc8 2e049d04
+02111ccc 2d00da02
+02111cd0 e7bfd100
+02111cd4 d0022e01
+02111cd8 d0002d00
+02111cdc f000e7a1
+02111ce0 f000f897
+02111ce4 f000f895
+02111ce8 683ef893
+02111cec 2d006835
+02111cf0 f000d00b
+02111cf4 2164f88d
+02111cf8 ee4ef7e0
+02111cfc 0c000408
+02111d00 42a05974
+02111d04 3d04d28d
+02111d08 2400e7f1
+02111d0c 2d006835
+02111d10 f70ed004
+02111d14 5174f817
+02111d18 e7f83d04
+02111d1c b00c6034
+02111d20 f147bcff
+02111d24 bd00ff15
+02111e00 47704f00
+02111e04 02111f00
+02111e10 480568b9
+02111e14 1c13680a
+02111e18 48044343
+02111e1c 600818c0
+02111e20 04000c00
+02111e24 47700c00
+02111e28 eeb9eb65
+02111e2c 0a3561a1
+02111e30 f7ffb500
+02111e34 211fffed
+02111e38 223e4001
+02111e3c 40020112
+02111e40 231f0952
+02111e44 4003029b
+02111e48 bd000a9b
+02111f00 02111b50
+02111f04 02111880
+02111f08 021d15a8
+d0000000 00000000
+
+**********************************
+9. SAFARI ZONE (GRASS, SURFING AND FISHING)
+**********************************
+   9.1. The safari zone, as well as the bug-catching contest, host a very peculiar Method K
+	variation. The game attemps four times to create a pokémon with 31 IV in at least
+	one stat. If it fails, the last pokémon created is selected. Curiously, the safari
+	zone in DPPl does not display the same feature.
+   9.2. The safari zone codes work for all pokémon fought on grass, water or fishing.
+**********************************
+
+522475e8 fbacf5d8
+122475ee 0000f6ca
+122475f0 0000fa87
+52247670 fb68f5d8
+12247676 0000f6ca
+12247678 0000fa43
+
+52246fc4 2164febf
+02246fc8 fd9af6ca
+52247e50 d1062800
+02247e54 fed4f6c9
+02111b00 f7e0b5e0
+02111b04 0409ef4a
+02111b08 f0000c09
+02111b0c 683ff979
+02111b10 42a1683e
+02111b14 2500d305
+02111b18 3e0451bd
+02111b1c dafb2e00
+02111b20 3604e002
+02111b24 603e51bc
+02111b28 0000bde0
+02111c00 b08cb5f0
+02111c04 f8fcf000
+02111c08 21846878
+02111c0c 18406800
+02111c10 0c016800
+02111c14 0c000400
+02111c18 91019000
+02111c1c 680168b8
+02111c20 9d009102
+02111c24 68b89e01
+02111c28 60019902
+02111c2c 1c040c08
+02111c30 f888f70e
+02111c34 40611c01
+02111c38 40714069
+02111c3c daf62908
+02111c40 680168b8
+02111c44 f70e9102
+02111c48 f70ef87d
+02111c4c f70ef87b
+02111c50 2600f879
+02111c54 f0002500
+02111c58 291ff8eb
+02111c5c 3501d100
+02111c60 d1002a1f
+02111c64 2b1f3501
+02111c68 3501d100
+02111c6c f8e0f000
+02111c70 d100291f
+02111c74 2a1f3501
+02111c78 3501d100
+02111c7c d1002b1f
+02111c80 95043501
+02111c84 f8c4f000
+02111c88 f0000405
+02111c8c 4328f8c1
+02111c90 f7e02119
+02111c94 0608ef88
+02111c98 1c040e00
+02111c9c f8b8f000
+02111ca0 21190405
+02111ca4 ee78f7e0
+02111ca8 0e000608
+02111cac d00a42a0
+02111cb0 f8aef000
+02111cb4 21194328
+02111cb8 ef74f7e0
+02111cbc 0e000608
+02111cc0 d0ae42a0
+02111cc4 3601e7ea
+02111cc8 2e049d04
+02111ccc 2d00da02
+02111cd0 e7bfd100
+02111cd4 d0022e01
+02111cd8 d0002d00
+02111cdc f000e7a1
+02111ce0 683ef897
+02111ce4 2d006835
+02111ce8 f000d00b
+02111cec 2164f891
+02111cf0 ee52f7e0
+02111cf4 0c000408
+02111cf8 42a05974
+02111cfc 3d04d291
+02111d00 2400e7f1
+02111d04 2d006835
+02111d08 f70ed004
+02111d0c 5174f81b
+02111d10 e7f83d04
+02111d14 b00c6034
+02111d18 0000bdf0
+02111e00 47704f00
+02111e04 02111f00
+02111e10 480568b9
+02111e14 1c13680a
+02111e18 48044343
+02111e1c 600818c0
+02111e20 04000c00
+02111e24 47700c00
+02111e28 eeb9eb65
+02111e2c 0a3561a1
+02111e30 f7ffb500
+02111e34 211fffed
+02111e38 223e4001
+02111e3c 40020112
+02111e40 231f0952
+02111e44 4003029b
+02111e48 bd000a9b
+02111f00 02111b50
+02111f04 02111880
+02111f08 021d15a8
+d0000000 00000000
+
+**********************************
+10. EGG POKÉMON
+**********************************
+   10.1. Since the egg PID, and thus shininess, is calculated when the egg is generated 
+	 (i.e., when the Day-Care gentleman calls you on the Pokégear and tells you 
+	 he found an egg), the codes must be activated while you walk around, waiting 
+	 for the pokémon couple to breed.
+   10.2. Egg IVs are calculated when you actually receive the egg from the Day-Care man.
+	 Therefore, egg PID and IVs are unrelated.
+**********************************
+
+5206c27c 1c01ffb3
+1206c282 0000f0a5
+1206c284 0000fcbd
+02111c00 b08cb5f8
+02111c04 f8fcf000
+02111c08 21846838
+02111c0c 18406800
+02111c10 0c016800
+02111c14 0c000400
+02111c18 91019000
+02111c1c 9e019d00
+02111c20 f8caf70e
+02111c24 04030c04
+02111c28 40630c1b
+02111c2c 4073406b
+02111c30 daf52b08
+02111c34 bdf8b00c
+02111e00 47704f00
+02111e04 02111f00
+02111f00 02111880
+d0000000 00000000
+
+**********************************
+A. TECHNICAL INFORMATION
+**********************************
+
+The following disassembled code refers to the Method K routine used on grass/dungeon encounters. 
+
+**************
+A.1 ENCOUNTER RATE INTERCEPTION
+**************
+
+Method K function 0x022475E8 checks the first encounter rate. The intercepted instruction at 
+address 0x022475EE calls function 0x2111B00, which stores the first encounter rate in memory,
+if a battle is to be triggered. The encounter rate value will be used later in the main funciton.
+
+[...]
+022475E2 2C64     cmp     r4,#0x64                                ;r4 contains the first encounter rate
+022475E4 D900     bls     Lxx_#0x22475E8                          ;
+022475E6 2464     mov     r4,#0x64                                ;
+022475E8 F5D8FBAC bl      Lxx_#0x201FD44                          ;RNG call
+022475EC 2164     mov     r1,#0x64                                ;
+022475EE F6CAFA87 bl      Lxx_#0x2111B00                          ;first encounter rate interception: function 0x2111B00 sets r1 equal to a random number from 0 to 99 and, if it is less than r4, copies r4 to memory
+022475F2 0408     lsl     r0,r1,#0x10                             ;
+022475F4 0C00     lsr     r0,r0,#0x10                             ;word r0 equals to r1 containing a random number from 0 to 99
+022475F6 42A0     cmp     r0,r4                                   ;
+022475F8 DA07     bge     Lxx_#0x224760A                          ;if r0 (random value between 0 and 99) is greater or equal to r4 (first encounter rate), no battle is triggered
+022475FA 1C28     mov     r0,r5                                   ;
+022475FC 1C31     mov     r1,r6                                   ;r6 contains the second encounter rate
+022475FE F000F835 bl      Lxx_#0x224766C                          ;calls function 0x224766C, to check the second encounter rate
+02247602 2800     cmp     r0,#0x0                                 ;
+02247604 D001     beq     Lxx_#0x224760A                          ;if function 0x224766C returns false, returns false (no battle)
+02247606 2001     mov     r0,#0x1                                 ;
+02247608 BDF8     pop     {r3-r7,r15}                             ;returns true (battle)
+0224760A 2000     mov     r0,#0x0                                 ;
+0224760C BDF8     pop     {r3-r7,r15}                             ;returns false (no battle)
+
+Method K function 0x0224766C checks the second encounter rate. The intercepted instruction
+at address 0x0224767A calls function 0x2111B00, which stores the second encounter rate in memory,
+if a battle is to be triggered. The encounter rate value will be used later in the main funciton.
+
+0224766C B510     push    {r4,r14}                                ;
+0224766E 1C0C     mov     r4,r1                                   ;r4 contains the second encounter rate
+02247670 F5D8FB68 bl      Lxx_#0x201FD44                          ;RNG call
+02247674 2164     mov     r1,#0x64                                ;
+02247676 F6CAFA43 bl      Lxx_#0x2111B00                          ;second encounter rate interception: function 0x2111B00 sets r1 equal to a random number from 0 to 99 and, if it is less than r4, copies r4 to memory
+0224767A 0408     lsl     r0,r1,#0x10                             ;
+0224767C 0C00     lsr     r0,r0,#0x10                             ;word r0 equals to r1 containing a random number from 0 to 99
+0224767E 42A0     cmp     r0,r4                                   ;
+02247680 D201     bcs     Lxx_#0x2247686                          ;if r0 (random value between 0 and 99) is greater or equal to r4 (second encounter rate), no battle is triggered
+02247682 2001     mov     r0,#0x1                                 ;
+02247684 BD10     pop     {r4,r15}                                ;returns true (battle)
+02247686 2000     mov     r0,#0x0                                 ;
+02247688 BD10     pop     {r4,r15}                                ;
+0224768A 0000     lsl     r0,r0,#0x0                              ;returns false (no battle)
+
+**************
+A.2 MAIN INTERCEPTION
+**************
+
+If a battle starts, Method K goes to function 0x0224768C, which sets the pokémon species based on
+the encounter slots available. The second interception at address 0x0224768E calls the main function 
+stored at address 0x2111C00.
+
+
+0224768C B508     push    {r3,r14}                                ;
+0224768E F6CAFAB7 bl      Lxx_#0x2111C00                          ;main interception: function 0x2111C00 advances the current RNG, until a valid shiny RNG is found
+02247692 2164     mov     r1,#0x64                                ;
+02247694 F6ABE980 blx     Lxx_#0x20F2998                          ;function 0x20F2998 sets r1 equal to a random number from 0 to 99 based on the high value of the RNG
+02247698 0408     lsl     r0,r1,#0x10                             ;
+0224769A 0C00     lsr     r0,r0,#0x10                             ;r0=r1
+0224769C 0600     lsl     r0,r0,#0x18                             ;
+0224769E 0E00     lsr     r0,r0,#0x18                             ;byte r0 equals to r1 containing the encounter slot used to define the pokémon species
+
+**************
+A.3 FUNCTION 0x2111B00
+**************
+
+Function 0x2111B00 creates, manages and destroys an array with variable size stored at address 0x02111B50,
+containing the list of encounter values.
+
+02111B00 B5E0     push    {r5-r7,r14}                             ;
+02111B02 F7E0EF4A blx     Lxx_#0x20F2998                          ;function 0x20F2998 sets r1 equal to a random number from 0 to 99 based on the high value of the RNG
+02111B06 0409     lsl     r1,r1,#0x10                             ;
+02111B08 0C09     lsr     r1,r1,#0x10                             ;word r1 equals to random number from 0 to 99
+02111B0A F000F979 bl      Lxx_#0x2111E00                          ;function 0x2111E00 loads r7 with a pointer to address 0x2111F00 where a list of constants is stored
+02111B0E 683F     ldr     r7,[r7]                                 ;loads r7 with a pointer to address 0x2111B50, where the array containing the encounter values is stored
+02111B10 683E     ldr     r6,[r7]                                 ;loads r6 with the size of the array at address 0x2111B50
+02111B12 42A1     cmp     r1,r4                                   ;
+02111B14 D305     bcc     Lxx_#0x2111B22                          ;if random value from 0 to 99 is greater or equal to encounter rate, branch to 0x2111B22
+02111B16 2500     mov     r5,#0x0                                 ;
+02111B18 51BD     str     r5,[r7,r6]                              ;since no battle is triggered, the current array element is destroyed
+02111B1A 3E04     sub     r6,#0x4                                 ;decrements the current array element
+02111B1C 2E00     cmp     r6,#0x0                                 ;
+02111B1E DAFB     bge     Lxx_#0x2111B18                          ;loop until all array elements are destroyed
+02111B20 E002     b       Lxx_#0x2111B28                          ;
+02111B22 3604     add     r6,#0x4                                 ;
+02111B24 51BC     str     r4,[r7,r6]                              ;adds encounter rate to array
+02111B26 603E     str     r6,[r7]                                 ;increments array size
+02111B28 BDE0     pop     {r5-r7,r15}                             ;return function
+
+**************
+A.4 MAIN FUNCTION 0x2111C00
+**************
+
+The main function at address 0x2111C00 advances the current RNG, until a valid shiny RNG is found.
+
+02111C00 B5F0     push    {r4-r7,r14}                             ;stores registers r4-r7 and r14 in stack
+02111C02 B08C     add     sp,-#0x30                               ;allocates stack
+02111C04 F000F8FC bl      Lxx_#0x2111E00                          ;function 0x2111E00 loads r7 with a pointer to address 0x2111F00 where a list of constants is stored
+02111C08 6878     ldr     r0,[r7,#0x4]                            ;loads r0 with main offset pointer address 0x02111880
+02111C0A 2184     mov     r1,#0x84                                ;r1=0x84
+02111C0C 6800     ldr     r0,[r0]                                 ;loads r0 with main offset pointer
+02111C0E 1840     add     r0,r0,r1                                ;r0=offset pointer+0x84, where the trainer sid/id values are stored
+02111C10 6800     ldr     r0,[r0]                                 ;loads r0 with trainer sid/id
+02111C12 0C01     lsr     r1,r0,#0x10                             ;r1=trainer sid
+02111C14 0400     lsl     r0,r0,#0x10                             ;
+02111C16 0C00     lsr     r0,r0,#0x10                             ;r0=trainer id
+02111C18 9000     str     r0,[sp]                                 ;stores trainer id in stack
+02111C1A 9101     str     r1,[sp,#0x4]                            ;stores trainer sid in stack
+02111C1C 68B8     ldr     r0,[r7,#0x8]                            ;loads r0 with the current rng address
+02111C1E 6801     ldr     r1,[r0]                                 ;loads r1 with the current rng
+02111C20 9102     str     r1,[sp,#0x8]                            ;stores current RNG in stack
+02111C22 9D00     ldr     r5,[sp]                                 ;loads r5 with trainer id
+02111C24 9E01     ldr     r6,[sp,#0x4]                            ;loads r6 with trainer sid
+02111C26 68B8     ldr     r0,[r7,#0x8]                            ;loads r0 with the current rng address
+02111C28 9902     ldr     r1,[sp,#0x8]                            ;loads r1 with stored rng in stack
+02111C2A 6001     str     r1,[r0]                                 ;stores rng in stack as current rng
+02111C2C 0C08     lsr     r0,r1,#0x10                             ;r0=loword(pid)
+02111C2E 1C04     mov     r4,r0                                   ;*****here the shiny rng loop begins*****
+02111C30 F70EF888 bl      Lxx_#0x201FD44                          ;function 0x201FD44 advances the current rng
+02111C34 1C01     mov     r1,r0                                   ;r1=hiword(pid)
+02111C36 4061     eor     r1,r4                                   ;r1=hiword(pid) xor loword(pid)
+02111C38 4069     eor     r1,r5                                   ;r1=hiword(pid) xor loword(pid) xor tid
+02111C3A 4071     eor     r1,r6                                   ;r1=hiword(pid) xor loword(pid) xor tid xor sid
+02111C3C 2908     cmp     r1,#0x8                                 ;if (hiword(pid) xor loword(pid) xor tid xor sid)<0x8, then the pokémon is shiny
+02111C3E DAF6     bge     Lxx_#0x2111C2E                          ;if pokémon is not shiny, loop back to address 0x2111C2E
+02111C40 68B8     ldr     r0,[r7,#0x8]                            ;loads r0 with the current RNG address
+02111C42 6801     ldr     r1,[r0]                                 ;loads r1 with the current rng
+02111C44 9102     str     r1,[sp,#0x8]                            ;stores current rng in stack
+02111C46 F70EF87D bl      Lxx_#0x201FD44                          ;function 0x201FD44 advances the current rng
+02111C4A F000F8E1 bl      Lxx_#0x2111E10                          ;function 0x2111E10 rewinds the current rng
+02111C4E 0405     lsl     r5,r0,#0x10                             ;r5=hiword(pid)
+02111C50 F000F8DE bl      Lxx_#0x2111E10                          ;function 0x2111E10 rewinds the current rng
+02111C54 4328     orr     r0,r5                                   ;r0=pid
+02111C56 2119     mov     r1,#0x19                                ;
+02111C58 F7E0EFA4 blx     Lxx_#0x20F2BA4                          ;function 0x20F2BA4 sets r1 with the pokémon nature based on the pid stored in r0
+02111C5C 0608     lsl     r0,r1,#0x18                             ;
+02111C5E 0E00     lsr     r0,r0,#0x18                             ;r0=shiny pokémon nature
+02111C60 1C04     mov     r4,r0                                   ;
+02111C62 F000F8D5 bl      Lxx_#0x2111E10                          ;*****here the nature validation loop begins*****
+02111C66 0405     lsl     r5,r0,#0x10                             ;r5=hiword(tested pid)
+02111C68 2119     mov     r1,#0x19                                ;
+02111C6A F7E0EE96 blx     Lxx_#0x20F2998                          ;function 0x20F2998 sets r1 with the nature based on the value stored in r0
+02111C6E 0608     lsl     r0,r1,#0x18                             ;
+02111C70 0E00     lsr     r0,r0,#0x18                             ;r0=tested nature from rng
+02111C72 42A0     cmp     r0,r4                                   ;if tested nature from rng=shiny pokémon nature, then shiny rng is valid
+02111C74 D00A     beq     Lxx_#0x2111C8C                          ;if shiny rng is valid, break nature validation loop (branch to 0x2111C8C)
+02111C76 F000F8CB bl      Lxx_#0x2111E10                          ;function 0x2111E10 rewinds the current rng
+02111C7A 4328     orr     r0,r5                                   ;r0=tested pid
+02111C7C 2119     mov     r1,#0x19                                ;
+02111C7E F7E0EF92 blx     Lxx_#0x20F2BA4                          ;function 0x20F2BA4 sets r1 equal to the pokémon nature based on the pid stored in r0
+02111C82 0608     lsl     r0,r1,#0x18                             ;
+02111C84 0E00     lsr     r0,r0,#0x18                             ;r0=tested nature from tested pid
+02111C86 42A0     cmp     r0,r4                                   ;if tested nature from tested pid=shiny pokémon nature, then shiny rng is invalid
+02111C88 D0CB     beq     Lxx_#0x2111C22                          ;if shiny rng is invalid, get another shiny rng (branch to 0x2111C22)
+02111C8A E7EA     b       Lxx_#0x2111C62                          ;nature validation loop (branch to 0x2111C62)
+02111C8C F000F8C0 bl      Lxx_#0x2111E10                          ;*****here the encounter rate validation begins*****
+02111C90 683E     ldr     r6,[r7]                                 ;loads r6 with the pointer to the array of encounter rate values
+02111C92 6835     ldr     r5,[r6]                                 ;loads r5 with the size of the encounter rate array
+02111C94 2D00     cmp     r5,#0x0                                 ;
+02111C96 D00B     beq     Lxx_#0x2111CB0                          ;if array size is equal to 0 (Sweet Scent/Honey), branch to 0x2111CB0
+02111C98 F000F8BA bl      Lxx_#0x2111E10                          ;function 0x2111E10 rewinds the current rng
+02111C9C 2164     mov     r1,#0x64                                ;
+02111C9E F7E0EE7C blx     Lxx_#0x20F2998                          ;function 0x20F2998 sets r1 equal to a random number from 0 to 99 based on the high value of the RNG
+02111CA2 0408     lsl     r0,r1,#0x10                             ;
+02111CA4 0C00     lsr     r0,r0,#0x10                             ;r0=r1
+02111CA6 5974     ldr     r4,[r6,r5]                              ;loads r4 with the last encounter rate value
+02111CA8 42A0     cmp     r0,r4                                   ;if random number is greater or equal to encounter rate, shiny RNG is invalid
+02111CAA D2BA     bcs     Lxx_#0x2111C22                          ;if shiny rng is invalid, get another shiny rng (branch to 0x2111C22)
+02111CAC 3D04     sub     r5,#0x4                                 ;decrements the array pointer
+02111CAE E7F1     b       Lxx_#0x2111C94                          ;check previous encounter rate value
+02111CB0 2400     mov     r4,#0x0                                 ;
+02111CB2 6835     ldr     r5,[r6]                                 ;loads r5 with encounter rate array size
+02111CB4 2D00     cmp     r5,#0x0                                 ;
+02111CB6 D004     beq     Lxx_#0x2111CC2                          ;if array size is equal to 0 (Sweet Scent/Honey), branch to 0x2111CC2 
+02111CB8 F70EF844 bl      Lxx_#0x201FD44                          ;reallings the RNG
+02111CBC 5174     str     r4,[r6,r5]                              ;destroys the array element
+02111CBE 3D04     sub     r5,#0x4                                 ;decrements the array pointer
+02111CC0 E7F8     b       Lxx_#0x2111CB4                          ;destroy previous array element
+02111CC2 6034     str     r4,[r6]                                 ;sets array size to 0
+02111CC4 B00C     add     sp,#0x30                                ;dellocates stack
+02111CC6 BDF0     pop     {r4-r7,r15}                             ;return function
+
+**************
+A.5 FUNCTION 0x02111E00
+**************
+
+Function 0x02111E00 loads r7 with a pointer to address 0x02111F00, where a list of constants is stored.
+
+02111E00 4F00     ldr     r7,=Lxx_#0x2111F00                      ;loads r7 with a pointer to address 0x2111F00, where a list of constants is stored
+02111E02 4770     bx      r14                                     ;return function
+02111E04 1F00     sub     r0,r0,4                                 ;constants
+02111E06 0211     lsl     r1,r2,#0x8                              ;
+
+**************
+A.6 FUNCTION 0x02111E10
+**************
+
+Function 0x02111E10 rewinds the current RNG.
+
+02111E10 68B9     ldr     r1,[r7,#0x8]                            ;loads current rng
+02111E12 4805     ldr     r0,=Lxx_#0xEEB9EB65                     ;
+02111E14 680A     ldr     r2,[r1]                                 ;
+02111E16 1C13     mov     r3,r2                                   ;
+02111E18 4343     mul     r3,r0                                   ;
+02111E1A 4804     ldr     r0,=Lxx_#0xA3561A1                      ;
+02111E1C 18C0     add     r0,r0,r3                                ;
+02111E1E 6008     str     r0,[r1]                                 ;previous rng=(current rng*0xEEB9EB65)+0xA3561A1
+02111E20 0C00     lsr     r0,r0,#0x10                             ;
+02111E22 0400     lsl     r0,r0,#0x10                             ;
+02111E24 0C00     lsr     r0,r0,#0x10                             ;r0=hiword(rng)
+02111E26 4770     bx      r14                                     ;return function
+02111E28 EB65     ????                                            ;constants
+02111E2A EEB9     ????                                            ;
+02111E2C 61A1     str     r1,[r4,#0x18]                           ;
+02111E2E 0A35     lsr     r5,r6,#0x8                              ;
+
+**************
+A.7 FUNCTION 0x02111E30
+**************
+
+Function 0x02111E30 extracts the IV values from the current rng. This function is only used
+in the bug-catching contest and in the safari zone routines.
+
+02111E30 B500     push    {r14}                                   ;
+02111E32 F7FFFFED bl      Lxx_#0x2111E10                          ;
+02111E36 211F     mov     r1,#0x1F                                ;
+02111E38 4001     and     r1,r0                                   ;r1=hp/speed iv
+02111E3A 223E     mov     r2,#0x3E                                ;
+02111E3C 0112     lsl     r2,r2,#0x4                              ;
+02111E3E 4002     and     r2,r0                                   ;
+02111E40 0952     lsr     r2,r2,#0x5                              ;r2=atk/spatk iv
+02111E42 231F     mov     r3,#0x1F                                ;
+02111E44 029B     lsl     r3,r3,#0xA                              ;
+02111E46 4003     and     r3,r0                                   ;
+02111E48 0A9B     lsr     r3,r3,#0xA                              ;r3=def/spdef iv
+02111E4A BD00     pop     {r15}                                   ;return function
+
+**************
+A.8 LIST OF CONSTANTS
+**************
+
+02111F00 1B50     sub     r0,r2,r5                                ;
+02111F02 0211     lsl     r1,r2,#0x8                              ;pointer to array of encounter rate values
+02111F04 1880     add     r0,r0,r2                                ;
+02111F06 0211     lsl     r1,r2,#0x8                              ;main offset address
+02111F08 15A8     asr     r0,r5,#0x16                             ;
+02111F0A 021D     lsl     r5,r3,#0x8                              ;current rng address
+
+**********************************
+B. PERSONAL NOTES
+**********************************
+
+After some months programming Final Fantasy IX (PSP) codes in MIPS, I decided to take a
+different course and try myself out with one my favorite games, Pokémon HG/SS. It was my very first
+experience coding in ARM/THUMB and I could say it was a positive one. In general, ARM/THUMB is
+not so different from MIPS. The halfword instruction size in THUMB makes the code more compact, but
+it also makes some coding techniques way trickier to pull off. The biggest challenge caused by the
+halfword instruction size, in my opinion, is the short branch range. In fact, bl instructions have
+a range of ±32Mb from the address of the current instruction, which is significantly lower than
+the MIPS branches. The short range forces the programmer to find a zero memory block close enough 
+to be in the branch reach from the intercepted address, big enough to accommodate the codes and 
+stable enough to not be shared with any other routine. The number of blocks that meet these
+requirements is considerably limited. Nevertheless, putting this issue aside, ARM/THUMB is 
+objectively easier to read, write and modify than MIPS.
+
+Quite often, I stumble upon comments of people who consider GameShark/Action Replay codes
+a bad pratice, labeling them as cheating or even hacking. Such opinions make me somewhat sad,
+because they are based on critically flawed misconceptions, that reflect how poor our educational
+systems are. GameShark/Action Replay codes are in fact machine language, just like MIPS and ARM/THUMB.
+The same way a person learns a programming language, like C or Java, he/she can acquire
+the proper knowledge to read and write GameShark/Action Replay. Creating codes is equivalent to
+programming.
+
+I strongly encourage all readers to learn machine language. It's easy, it's accessible, it's fun. 
+Do not get carried away by all weird symbols and terminology. There are very few instructions 
+to learn: mov, ldr/str, ldmia/stmia, b, cmp, push/pop, the logical (lsl, lsr, and, orr, eor) and 
+the mathematical (add, sub, rsub, mul) operations, nothing more, nothing less. Consider learning 
+machine code like learning a language with only a handful of words. I am positive anyone can aquire
+very satisfactory skills in just a couple of days. The time investiment is totally worth it. 
+The knowledge on machine language will allow you to play and enjoy your favourite games on a brand
+new level, like you never did in your life. 
+
+If you want to reach me, send an email to cirobfes@hotmail.com
+
+EOF
