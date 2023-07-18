@@ -38,9 +38,9 @@ the 4th generation games is the linear formula:
 next RNG = (current RNG * 0x41c64e6d) + 0x6073
 
 On each step on a grass area, the game calls the RNG twice to decide if a battle is to
-be triggered or not. If the battle starts, the game calculates the attributes of the
+be triggered or not. In case of a battle, the game starts calculating the attributes of the
 opposing pokémon. The third RNG call is used to select the pokémon species out of a list of
-ten or eleven encounter slots and the fourth RNG sets the nature. Then, the game enters 
+ten or eleven encounter slots. The fourth RNG sets the nature. Then, the game enters 
 a loop state, calling the RNG twice on each cycle, to produce the so called PID (pokémon 
 identification number). The PID is the most important number in the pokémon data structure. 
 It is used to define many aspects of the pokémon, like nature, gender, shininess and many 
