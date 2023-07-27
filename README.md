@@ -5,13 +5,13 @@ Written in C++/ARM/THUMB.
 
 Games currently covered:
 
-#Generation 4
+# Generation 4
 
 *Pokémon Platinum
 
 *Pokémon HeartGold/Soulsilver
 
-#Generation 5
+# Generation 5
 
 *Pokémon Black/White
 
