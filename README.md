@@ -7,13 +7,13 @@ Games currently covered:
 
 # Generation 4
 
-*Pokémon Platinum
+Pokémon Platinum
 
-*Pokémon HeartGold/Soulsilver
+Pokémon HeartGold/Soulsilver
 
 # Generation 5
 
-*Pokémon Black/White
+Pokémon Black/White
 
 Copyright (C) 2023 Ciro Bogea Fernandes.
 
