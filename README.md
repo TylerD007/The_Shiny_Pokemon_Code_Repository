@@ -5,11 +5,11 @@ Written in C++/ARM/THUMB.
 
 Games currently covered:
 
-Pokémon Platinum
+ * Pokémon Platinum
 
-Pokémon HeartGold/Soulsilver
+ * Pokémon HeartGold/Soulsilver
 
-Pokémon Black/White
+ * Pokémon Black/White
 
 Copyright (C) 2023 Ciro Bogea Fernandes.
 
