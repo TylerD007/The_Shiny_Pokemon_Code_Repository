@@ -1,8 +1,17 @@
-# Pokémon RNG Repository
-Repository of functions that extract the main pokémon data structure information (encounter slot, pid, nature and ivs) from the RNG in the Pokémon games.
+# The Shiny Pokémon Code Repository
+Repository of Action Replay/Gameshark codes that generate legal shiny Pokémon encounters.
 
-Written in C++.
+Written in C++/ARM/THUMB.
+
+Games currently covered:
+
+#Generation 4
+*Pokémon Platinum
+*Pokémon HeartGold/Soulsilver
+
+#Generation 5
+*Pokémon Black/White
 
 Copyright (C) 2023 Ciro Bogea Fernandes.
 
-The repository also contains text files with Action Replay Codes to encounter legal shiny pokémon (codes programmed in ARM/THUMB).
+
