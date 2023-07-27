@@ -1,7 +1,7 @@
 
  * -----------------------------------------------------------------------*
- *		  POKÉMON HEARTGOLD/SOULSILVER (US VERSION)		  *
- * 		ACTION REPLAY - LEGAL SHINY POKÉMON ENCOUNTERS		  *	
+ *		  POKÃ‰MON HEARTGOLD/SOULSILVER (US VERSION)		  *
+ * 		ACTION REPLAY - LEGAL SHINY POKÃ‰MON ENCOUNTERS		  *	
  * -----------------------------------------------------------------------*
  * Programmed in ARM/THUMB and converted to the Action Replay code syntax *
  * Copyright (C) 2023 Ciro Bogea Fernandes.				  *
@@ -29,37 +29,37 @@ COPYRIGHT DISCLAIMER
 INTRODUCTION
 **********************************
 
-In the world of Pokémon, the player can find wild pokémon through a wide variety of 
+In the world of PokÃ©mon, the player can find wild pokÃ©mon through a wide variety of 
 forms, such as battles, gifts, eggs and special events. Depending on the type of encounter,
-a different function is used to compute the pokémon attributes based on a set of numbers, 
+a different function is used to compute the pokÃ©mon attributes based on a set of numbers, 
 ordered according to a function called RNG (random number generator). The main RNG in the
 4th generation games is given by the linear formula:
 
 next RNG = (current RNG * 0x41c64e6d) + 0x6073
 
 On each step on a grass area, the game calls the RNG twice to decide for a battle against a
-wild pokémon. In case of a battle, the game starts calculating the attributes of the 
-opposing pokémon. The third RNG call is used to select the pokémon species out of a list of
+wild pokÃ©mon. In case of a battle, the game starts calculating the attributes of the 
+opposing pokÃ©mon. The third RNG call is used to select the pokÃ©mon species out of a list of
 ten or eleven encounter slots. The fourth RNG sets the nature. Then, the game enters 
-a loop state, calling the RNG twice on each cycle, to produce the so called PID (pokémon 
-identification number). The PID is the most important number in the pokémon data structure. 
+a loop state, calling the RNG twice on each cycle, to produce the so called PID (pokÃ©mon 
+identification number). The PID is the most important number in the pokÃ©mon data structure. 
 It is used to define many different attributes, like nature, gender and shininess. When the
 game finds a PID, whose correspondent nature is equal to the nature set in the fourth RNG 
-call, the function breaks the loop. Finally, the last two RNG calls define the pokémon IVs.
+call, the function breaks the loop. Finally, the last two RNG calls define the pokÃ©mon IVs.
 
-The routine used for grass/dungeon areas establishes the stardard pokémon calculation
+The routine used for grass/dungeon areas establishes the stardard pokÃ©mon calculation
 in the Generation IV games. It is called Method J in D/P/Pl and Method K in HG/SS. The 
 functions for other encounter types (surfing, fishing, etc.) are variations of the standard
 routine, with slight modifications. Some may lack the battle trigger RNG calls, some may have
 additional RNG calls, some may even loop the entire routine a set amount of times, but in the
 end, they all share the basic pattern described above.
 
-The Action Replay codes in this document intercept the function that calculates the pokémon 
+The Action Replay codes in this document intercept the function that calculates the pokÃ©mon 
 data structure, advance the RNG until a valid shiny RNG is found and return the code execution 
-to its normal state, to let the game calculate the pokémon based on the shiny RNG. In other
-words, the AR codes force the game to always use RNGs that result in shiny pokémon. The codes 
-*do not* change any other information besides the current RNG. Because of that, any shiny pokémon
-caught while the codes are activated are *100% legal*. The pokémon species, nature, PID, 
+to its normal state, to let the game calculate the pokÃ©mon based on the shiny RNG. In other
+words, the AR codes force the game to always use RNGs that result in shiny pokÃ©mon. The codes 
+*do not* change any other information besides the current RNG. Because of that, any shiny pokÃ©mon
+caught while the codes are activated are *100% legal*. The pokÃ©mon species, nature, PID, 
 IVs, as well as any other attribute, match the results from an existing and obtainable set of
 RNGs in the game.
 
@@ -69,10 +69,10 @@ WARNINGS
 
 Please, read the following notes thoroughly before using the codes.
 
-1. If the leading pokémon in your party has a nature that affects the opposing wild pokémon
+1. If the leading pokÃ©mon in your party has a nature that affects the opposing wild pokÃ©mon
 attributes, such as Cute Charm, Synchronize or Pressure, the game executes additional RNG 
 calls to compute those effects. Since the extra RNG calls modify the RNG allignment established
-by our codes, the codes ***DO NOT*** work, if the leading pokémon has a nature with 
+by our codes, the codes ***DO NOT*** work, if the leading pokÃ©mon has a nature with 
 overworld effects.
 
 2. Do not use more than one type of code at the same time in any circunstance. Since the 
@@ -84,7 +84,7 @@ and generates a number from 0 to 99. If the number is greater or equal to the fi
 rate, no battle is triggered. The first encounter rate is variable and increases after a certain
 number of steps, but only when the trainer turns around and starts walking on a different 
 direction. If the trainer does not change directions, the first encounter rate remains unaffected.
-That means that the less the player make turns, the less likely to find wild pokémon. The first
+That means that the less the player make turns, the less likely to find wild pokÃ©mon. The first
 encounter rates are 40, 70, 80 and 100. If the RNG generated number is less than the first 
 encounter rate, the game calls the RNG again and generates another number from 0 to 99. 
 If the number is greater or equal to the second encounter rate, no battle is triggered. 
@@ -106,7 +106,7 @@ encounter rate:
 3.9.  Super rod:		  75	 100
 3.10. Rock smash:		  --	 30
 
-If the trainer uses Sweet Scent/Honey to attice wild pokémon, no encounter check is performed.
+If the trainer uses Sweet Scent/Honey to attice wild pokÃ©mon, no encounter check is performed.
 
 If the random numbers that preceed a shiny RNG do not trigger a battle due to the encounter 
 rates, the AR codes in this document will discard the shiny RNG and search for another one. Hence,
@@ -116,9 +116,9 @@ shiny RNGs.
 
 The user has the option to disable the encounter rate validation completely, by simply
 not activating the portion of code separated from the main body by a blank line, if it exists. 
-Remember that, without the encounter rate validation, the player will battle pokémon he/she would 
-not normally do. It's important to underline that the pokémon community disconsiders encounter rates
-when checking the pokémon legitimacy. The reason is that any RNG could be hit with Sweet Scent/Honey. 
+Remember that, without the encounter rate validation, the player will battle pokÃ©mon he/she would 
+not normally do. It's important to underline that the pokÃ©mon community disconsiders encounter rates
+when checking the pokÃ©mon legitimacy. The reason is that any RNG could be hit with Sweet Scent/Honey. 
 I personally dissent, because Sweet Scent/Honey cannot be used in all circunstances, for instance,
 under the permanent rainy weather on Route 33. It's really up to the user to decide the level of 
 legitimacy he/she wants.
@@ -130,7 +130,7 @@ Using Sweet Scent/Honey or disabling the encounter rate validation code portion 
 lag considerably.
 
 **********************************
-1. GRASS/DUNGEON POKÉMON
+1. GRASS/DUNGEON POKÃ‰MON
 **********************************
 
 522475e8 fbacf5d8
@@ -227,12 +227,12 @@ lag considerably.
 d0000000 00000000
 
 **********************************
-2. STATIONARY POKÉMON
+2. STATIONARY POKÃ‰MON
 **********************************
-   2.1. Stationary pokémon are wild pokémon with overworld sprites: Sudowoodo, Lapras,
+   2.1. Stationary pokÃ©mon are wild pokÃ©mon with overworld sprites: Sudowoodo, Lapras,
 	Electrodes in Rocket Hideout, Lugia, Ho-oh, Snorlax, Suicune, the legendary
 	birds, Mewtwo, Groudon, Kyogre and Rayquaza. Codes must be activated when
-	you interact with the pokémon.
+	you interact with the pokÃ©mon.
 **********************************
 
 5224788c bd100e00
@@ -298,19 +298,19 @@ d0000000 00000000
 d0000000 00000000
 
 **********************************
-3. STARTERS/ROAMING/FOSSIL/GIFT POKÉMON
+3. STARTERS/ROAMING/FOSSIL/GIFT POKÃ‰MON
 **********************************
-   3.1. Starters, roaming, fossil and gift pokémon are calculated according to Method 1.
+   3.1. Starters, roaming, fossil and gift pokÃ©mon are calculated according to Method 1.
    3.2. Starters are the Johto, Kanto and Hoenn starter trios. Codes must be activated
-	when you choose the pokémon.
-   3.3. Roaming pokémon are Raikou, Entei, Latios and Latias. Codes must be activated when
+	when you choose the pokÃ©mon.
+   3.3. Roaming pokÃ©mon are Raikou, Entei, Latios and Latias. Codes must be activated when
 	the trainer wakes up Raikou and Entei in the Burned Tower or when the trainer leaves
-	the Pokémon Fan Club in Vermillion City and Steve tells a legendary pokémon started
+	the PokÃ©mon Fan Club in Vermillion City and Steve tells a legendary pokÃ©mon started
 	roaming Kanto.
-   3.4. Codes must be activated when you revive the fossil pokémon in Pewter City.
-   3.5. Gift pokémon are Togepi received from Prof. Elm's assistent, Eevee received from
+   3.4. Codes must be activated when you revive the fossil pokÃ©mon in Pewter City.
+   3.5. Gift pokÃ©mon are Togepi received from Prof. Elm's assistent, Eevee received from
 	Bill and ExtremeSpeed Dratini received in the Dragon's Den. Codes must be activated
-	when you receive the pokémon.
+	when you receive the pokÃ©mon.
 **********************************
 
 5206dee4 2800980c
@@ -737,8 +737,8 @@ d0000000 00000000
 8. BUG-CATCHING CONTEST
 **********************************
    8.1. The bug-catching contest, as well as the safari zone, host a very peculiar Method K
-	variation. The game attemps four times to create a pokémon with 31 IV in at least
-	one stat. If it fails, the last pokémon created is selected. Curiously, the safari
+	variation. The game attemps four times to create a pokÃ©mon with 31 IV in at least
+	one stat. If it fails, the last pokÃ©mon created is selected. Curiously, the safari
 	zone in DPPl does not display the same feature.
 **********************************
 
@@ -863,10 +863,10 @@ d0000000 00000000
 9. SAFARI ZONE (GRASS, SURFING AND FISHING)
 **********************************
    9.1. The safari zone, as well as the bug-catching contest, host a very peculiar Method K
-	variation. The game attemps four times to create a pokémon with 31 IV in at least
-	one stat. If it fails, the last pokémon created is selected. Curiously, the safari
+	variation. The game attemps four times to create a pokÃ©mon with 31 IV in at least
+	one stat. If it fails, the last pokÃ©mon created is selected. Curiously, the safari
 	zone in DPPl does not display the same feature.
-   9.2. The safari zone codes work for all pokémon fought on grass, water or fishing.
+   9.2. The safari zone codes work for all pokÃ©mon fought on grass, water or fishing.
 **********************************
 
 522475e8 fbacf5d8
@@ -985,12 +985,12 @@ d0000000 00000000
 d0000000 00000000
 
 **********************************
-10. EGG POKÉMON
+10. EGG POKÃ‰MON
 **********************************
    10.1. Since the egg PID, and thus shininess, is calculated when the egg is generated 
-	 (i.e., when the Day-Care gentleman calls you on the Pokégear and tells you 
+	 (i.e., when the Day-Care gentleman calls you on the PokÃ©gear and tells you 
 	 he found an egg), the codes must be activated while you walk around, waiting 
-	 for the pokémon couple to breed.
+	 for the pokÃ©mon couple to breed.
    10.2. Egg IVs are calculated when you actually receive the egg from the Day-Care man.
 	 Therefore, egg PID and IVs are unrelated.
 **********************************
@@ -1075,7 +1075,7 @@ if a battle is to be triggered. The encounter rate value will be used later in t
 A.2 MAIN INTERCEPTION
 **************
 
-If a battle starts, Method K goes to function 0x0224768C, which sets the pokémon species based on
+If a battle starts, Method K goes to function 0x0224768C, which sets the pokÃ©mon species based on
 the encounter slots available. The second interception at address 0x0224768E calls the main function 
 stored at address 0x2111C00.
 
@@ -1087,7 +1087,7 @@ stored at address 0x2111C00.
 02247698 0408     lsl     r0,r1,#0x10                             ;
 0224769A 0C00     lsr     r0,r0,#0x10                             ;r0=r1
 0224769C 0600     lsl     r0,r0,#0x18                             ;
-0224769E 0E00     lsr     r0,r0,#0x18                             ;byte r0 equals to r1 containing the encounter slot used to define the pokémon species
+0224769E 0E00     lsr     r0,r0,#0x18                             ;byte r0 equals to r1 containing the encounter slot used to define the pokÃ©mon species
 
 **************
 A.3 FUNCTION 0x2111B00
@@ -1150,8 +1150,8 @@ The main function at address 0x2111C00 advances the current RNG, until a valid s
 02111C36 4061     eor     r1,r4                                   ;r1=hiword(pid) xor loword(pid)
 02111C38 4069     eor     r1,r5                                   ;r1=hiword(pid) xor loword(pid) xor tid
 02111C3A 4071     eor     r1,r6                                   ;r1=hiword(pid) xor loword(pid) xor tid xor sid
-02111C3C 2908     cmp     r1,#0x8                                 ;if (hiword(pid) xor loword(pid) xor tid xor sid)<0x8, then the pokémon is shiny
-02111C3E DAF6     bge     Lxx_#0x2111C2E                          ;if pokémon is not shiny, loop back to address 0x2111C2E
+02111C3C 2908     cmp     r1,#0x8                                 ;if (hiword(pid) xor loword(pid) xor tid xor sid)<0x8, then the pokÃ©mon is shiny
+02111C3E DAF6     bge     Lxx_#0x2111C2E                          ;if pokÃ©mon is not shiny, loop back to address 0x2111C2E
 02111C40 68B8     ldr     r0,[r7,#0x8]                            ;loads r0 with the current RNG address
 02111C42 6801     ldr     r1,[r0]                                 ;loads r1 with the current rng
 02111C44 9102     str     r1,[sp,#0x8]                            ;stores current rng in stack
@@ -1161,9 +1161,9 @@ The main function at address 0x2111C00 advances the current RNG, until a valid s
 02111C50 F000F8DE bl      Lxx_#0x2111E10                          ;function 0x2111E10 rewinds the current rng
 02111C54 4328     orr     r0,r5                                   ;r0=pid
 02111C56 2119     mov     r1,#0x19                                ;
-02111C58 F7E0EFA4 blx     Lxx_#0x20F2BA4                          ;function 0x20F2BA4 sets r1 with the pokémon nature based on the pid stored in r0
+02111C58 F7E0EFA4 blx     Lxx_#0x20F2BA4                          ;function 0x20F2BA4 sets r1 with the pokÃ©mon nature based on the pid stored in r0
 02111C5C 0608     lsl     r0,r1,#0x18                             ;
-02111C5E 0E00     lsr     r0,r0,#0x18                             ;r0=shiny pokémon nature
+02111C5E 0E00     lsr     r0,r0,#0x18                             ;r0=shiny pokÃ©mon nature
 02111C60 1C04     mov     r4,r0                                   ;
 02111C62 F000F8D5 bl      Lxx_#0x2111E10                          ;*****here the nature validation loop begins*****
 02111C66 0405     lsl     r5,r0,#0x10                             ;r5=hiword(tested pid)
@@ -1171,15 +1171,15 @@ The main function at address 0x2111C00 advances the current RNG, until a valid s
 02111C6A F7E0EE96 blx     Lxx_#0x20F2998                          ;function 0x20F2998 sets r1 with the nature based on the value stored in r0
 02111C6E 0608     lsl     r0,r1,#0x18                             ;
 02111C70 0E00     lsr     r0,r0,#0x18                             ;r0=tested nature from rng
-02111C72 42A0     cmp     r0,r4                                   ;if tested nature from rng=shiny pokémon nature, then shiny rng is valid
+02111C72 42A0     cmp     r0,r4                                   ;if tested nature from rng=shiny pokÃ©mon nature, then shiny rng is valid
 02111C74 D00A     beq     Lxx_#0x2111C8C                          ;if shiny rng is valid, break nature validation loop (branch to 0x2111C8C)
 02111C76 F000F8CB bl      Lxx_#0x2111E10                          ;function 0x2111E10 rewinds the current rng
 02111C7A 4328     orr     r0,r5                                   ;r0=tested pid
 02111C7C 2119     mov     r1,#0x19                                ;
-02111C7E F7E0EF92 blx     Lxx_#0x20F2BA4                          ;function 0x20F2BA4 sets r1 equal to the pokémon nature based on the pid stored in r0
+02111C7E F7E0EF92 blx     Lxx_#0x20F2BA4                          ;function 0x20F2BA4 sets r1 equal to the pokÃ©mon nature based on the pid stored in r0
 02111C82 0608     lsl     r0,r1,#0x18                             ;
 02111C84 0E00     lsr     r0,r0,#0x18                             ;r0=tested nature from tested pid
-02111C86 42A0     cmp     r0,r4                                   ;if tested nature from tested pid=shiny pokémon nature, then shiny rng is invalid
+02111C86 42A0     cmp     r0,r4                                   ;if tested nature from tested pid=shiny pokÃ©mon nature, then shiny rng is invalid
 02111C88 D0CB     beq     Lxx_#0x2111C22                          ;if shiny rng is invalid, get another shiny rng (branch to 0x2111C22)
 02111C8A E7EA     b       Lxx_#0x2111C62                          ;nature validation loop (branch to 0x2111C62)
 02111C8C F000F8C0 bl      Lxx_#0x2111E10                          ;*****here the encounter rate validation begins*****
@@ -1280,12 +1280,12 @@ B. PERSONAL NOTES
 **********************************
 
 After some months programming Final Fantasy IX (PSP) codes in MIPS, I decided to take a
-different course and try myself out with one my favorite games, Pokémon HG/SS. It was my very first
+different course and try myself out with one my favorite games, PokÃ©mon HG/SS. It was my very first
 experience coding in ARM/THUMB and I could say it was a positive one. In general, ARM/THUMB is
 not so different from MIPS. The halfword instruction size in THUMB makes the code more compact, but
 it also makes some coding techniques way trickier to pull off. The biggest challenge caused by the
 halfword instruction size, in my opinion, is the short branch range. In fact, bl instructions have
-a range of ±32Mb from the address of the current instruction, which is significantly lower than
+a range of Â±32Mb from the address of the current instruction, which is significantly lower than
 the MIPS branches. The short range forces the programmer to find a zero memory block close enough 
 to be in the branch reach from the intercepted address, big enough to accommodate the codes and 
 stable enough to not be shared with any other routine. The number of blocks that meet these
