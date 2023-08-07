@@ -1,7 +1,7 @@
 
  * -----------------------------------------------------------------------*
- *		      POKÉMON EMERALD (US VERSION)			  *
- * 	    GAMESHARK v. 1/2 - LEGAL SHINY POKÉMON ENCOUNTERS		  *	
+ *		      POKÃ‰MON EMERALD (US VERSION)			  *
+ * 	    GAMESHARK v. 1/2 - LEGAL SHINY POKÃ‰MON ENCOUNTERS		  *	
  * -----------------------------------------------------------------------*
  * Programmed in ARM/THUMB and converted to the VBA-M code syntax	  *
  * Copyright (C) 2023 Ciro Bogea Fernandes.				  *
@@ -29,35 +29,35 @@ COPYRIGHT DISCLAIMER
 INTRODUCTION
 **********************************
 
-In the world of Pokémon, the player can find wild pokémon through a wide variety of 
+In the world of PokÃ©mon, the player can find wild pokÃ©mon through a wide variety of 
 forms, such as battles, gifts, eggs and special events. Depending on the type of encounter,
-a different function is used to compute the pokémon attributes based on a set of numbers, 
+a different function is used to compute the pokÃ©mon attributes based on a set of numbers, 
 ordered according to a function called RNG (random number generator). The main RNG in the
 3rd generation games is given by the linear formula:
 
 next RNG = (current RNG * 0x41c64e6d) + 0x6073
 
 On each step on a grass area, the game calls the RNG to decide for a battle against a
-wild pokémon. In case of a battle, the game starts calculating the attributes of the 
-opposing pokémon. The second RNG call is used to select the pokémon species out of a list 
-of ten or eleven encounter slots. The third RNG has no influence on the opposing pokémon
+wild pokÃ©mon. In case of a battle, the game starts calculating the attributes of the 
+opposing pokÃ©mon. The second RNG call is used to select the pokÃ©mon species out of a list 
+of ten or eleven encounter slots. The third RNG has no influence on the opposing pokÃ©mon
 structure. The fourth RNG sets the nature. Then, the game enters a loop state, calling the
-RNG twice on each cycle, to produce the so called PID (pokémon identification number). 
-The PID is the most important number in the pokémon data structure. It is used to define 
+RNG twice on each cycle, to produce the so called PID (pokÃ©mon identification number). 
+The PID is the most important number in the pokÃ©mon data structure. It is used to define 
 many different attributes, like nature, gender and shininess. When the game finds a PID, 
 whose correspondent nature is equal to the nature set in the fourth RNG call, the function
-breaks the loop. Finally, the last two RNG calls define the pokémon IVs. Generation III 
-games apply the described routine, known as Method H, to calculate the wild pokémon 
+breaks the loop. Finally, the last two RNG calls define the pokÃ©mon IVs. Generation III 
+games apply the described routine, known as Method H, to calculate the wild pokÃ©mon 
 attributes for all encounter types (grass, dungeons, surfing, fishing). The only exception
-are starters/stationary/roamers/fossil/gift pokémon, which basically follow a simplified
+are starters/stationary/roamers/fossil/gift pokÃ©mon, which basically follow a simplified
 Method H variation.
 
-The codes in this document intercept the function that calculates the pokémon data structure,
+The codes in this document intercept the function that calculates the pokÃ©mon data structure,
 advance the RNG until a valid shiny RNG is found and return the code execution to its normal
-state, to let the game calculate the pokémon based on the shiny RNG. In other words, the
-codes force the game to always use RNGs that result in shiny pokémon. The codes *do not* change
-any other information besides the current RNG. Because of that, any shiny pokémon caught while
-the codes are activated are *100% legal*. The pokémon species, nature, PID, IVs, as well as 
+state, to let the game calculate the pokÃ©mon based on the shiny RNG. In other words, the
+codes force the game to always use RNGs that result in shiny pokÃ©mon. The codes *do not* change
+any other information besides the current RNG. Because of that, any shiny pokÃ©mon caught while
+the codes are activated are *100% legal*. The pokÃ©mon species, nature, PID, IVs, as well as 
 any other attribute, match the results from an existing and obtainable set of RNGs in the game.
 
 **********************************
@@ -68,7 +68,7 @@ Vblank is the name of a Generation 3 exclusive function responsible for updating
 on screen. It is triggered by a timer roughly once every frame. What is so special about 
 Vblank is the fact that it advances the RNG by one stage each time it is called and, if the
 timer triggers it while the Method H routine is being executed, the additional RNG call 
-breaks the linearity of the RNG sequence used to compute the pokémon attributes. This is 
+breaks the linearity of the RNG sequence used to compute the pokÃ©mon attributes. This is 
 considered a programmation flaw, since one function affects the results of another function 
 in unpredictable fashions.
 
@@ -79,9 +79,9 @@ first set of IVs is calculated. These results account only for the real hardware
 
 Since our codes introduce lots of additional computation to the original game programmation,
 while they are running, Vblank is called multiple times during Method H. In order to avoid 
-pokémon that defy Methods H-1, H-2 or H-4 rules, the codes disable the Vblank RNG advancement 
+pokÃ©mon that defy Methods H-1, H-2 or H-4 rules, the codes disable the Vblank RNG advancement 
 in the time interval between the encounter slot and the PID calculation. Although unnatural,
-the solution sucessfully forces the creation of legal Method H-1, H-2 and H-4 pokémon.
+the solution sucessfully forces the creation of legal Method H-1, H-2 and H-4 pokÃ©mon.
 
 **********************************
 ROM PATCH LIMITATION
@@ -114,13 +114,13 @@ You can use AR Crypt to convert our raw codes to the GameShark v. 1/2 or to the 
 v. 3/4 notation. Don't forget to adjust the syntax accordingly before converting the codes. 
 
 **********************************
-LEADING POKÉMON NATURE
+LEADING POKÃ‰MON NATURE
 **********************************
 
-If the leading pokémon in your party has a nature that affects the opposing wild pokémon
+If the leading pokÃ©mon in your party has a nature that affects the opposing wild pokÃ©mon
 attributes, such as Cute Charm, Synchronize, Pressure and Keen Eye, the game executes 
 additional RNG calls to compute those effects. Since the extra RNG calls modify the RNG 
-allignment established by our codes, the codes DO NOT work, if the leading pokémon has a
+allignment established by our codes, the codes DO NOT work, if the leading pokÃ©mon has a
 nature with overworld effects.
 
 **********************************
@@ -138,7 +138,7 @@ starts. The encounter rate is constant and relates to the area the player is at:
 
 Fishing mechanics in Generation III are complex and won't be covered here.
 
-If the trainer uses Sweet Scent to attice wild pokémon, no encounter check is performed.
+If the trainer uses Sweet Scent to attice wild pokÃ©mon, no encounter check is performed.
 
 If the random numbers that preceed a shiny RNG do not trigger a battle due to the encounter 
 rate, the codes in this document will discard the shiny RNG and search for another one. Hence,
@@ -148,20 +148,20 @@ shiny RNGs.
 
 The user has the option to disable the encounter rate validation completely, by simply
 not activating the portion of code separated from the main body by a blank line, if it exists. 
-Remember that, without the encounter rate validation, the player will battle pokémon he/she
-would not normally do. It's important to underline that the pokémon community disconsiders 
-encounter rates when checking the pokémon legitimacy. The reason is that any RNG could be hit
+Remember that, without the encounter rate validation, the player will battle pokÃ©mon he/she
+would not normally do. It's important to underline that the pokÃ©mon community disconsiders 
+encounter rates when checking the pokÃ©mon legitimacy. The reason is that any RNG could be hit
 with Sweet Scent. I personally dissent, because Sweet Scent cannot be used in all circunstances, 
 for instance, under permanent rainy weather. It's really up to the user to decide the level of 
 legitimacy he/she wants.
 
 **********************************
-POKÉMON EMERALD INITIAL SEED
+POKÃ‰MON EMERALD INITIAL SEED
 **********************************
 
-When the player loads his/her save file in Pokémon Emerald, the game sets the initial
+When the player loads his/her save file in PokÃ©mon Emerald, the game sets the initial
 RNG value to zero. Since the initial seed is always zero and given that the RNG sequence
-advances according to a linear function, Pokémon Emerald starts the one and exact same 
+advances according to a linear function, PokÃ©mon Emerald starts the one and exact same 
 RNG sequence everytime the save file is loaded. As the RNG advances very fast due to 
 Vblank, the casual player does not notice his/her actions are governed by the same set
 of numbers.
@@ -170,19 +170,19 @@ Emerald fixed RNG is yet another huge programmation issue. No matter how fast Vb
 it is not fast enough to cover the entire RNG sequence in less than 20 days of unpaused
 gameplay. Yes, almost a month! As a consequence, the vast majority of the game RNG becomes
 virtually inacessible to the player, which pretty much throws out of the window a myriad
-of shiny and competitive pokémon. Shiny hunting stationary pokémon through save/reset is
-also reduced to a meaningless minigame of hitting the same frame to catch the same pokémon.
+of shiny and competitive pokÃ©mon. Shiny hunting stationary pokÃ©mon through save/reset is
+also reduced to a meaningless minigame of hitting the same frame to catch the same pokÃ©mon.
 
 The fixed RNG sequence becomes evident when our codes are activated. Because the codes 
-advance a large amount of RNG numbers to find a shiny pokémon, it is easy to hit the same
+advance a large amount of RNG numbers to find a shiny pokÃ©mon, it is easy to hit the same
 RNG in different gameplays. As a consequence, the player will keep encountering the same 
-sequence of pokémon every time he/she resets the game. There are some tricks that may help
+sequence of pokÃ©mon every time he/she resets the game. There are some tricks that may help
 advancing the RNG faster to find later shiny frames:
 
 1. Use Sweet Scent to gain access to the largest RNG spread possible.
 
 2. Use a Repel and walk on grass or surf on water with the codes activated. The game still
-calculates the wild pokémon before discarding it due to the Repel effect. Hence, the codes
+calculates the wild pokÃ©mon before discarding it due to the Repel effect. Hence, the codes
 keep advancing the RNG, as if the player were actually engaging in battles.
 
 3. Use VBA-M save/load state. As long as the player does not reset the game, the RNG 
@@ -204,7 +204,7 @@ Using Sweet Scent or disabling the encounter rate validation code portion reduce
 lag considerably.
 
 **********************************
-1. GRASS/DUNGEON/SURFING/FISHING/ROCK SMASH POKÉMON
+1. GRASS/DUNGEON/SURFING/FISHING/ROCK SMASH POKÃ‰MON
 **********************************
 
 080b5158:f8d2f2ca
@@ -305,19 +305,19 @@ lag considerably.
 0837f70c:03005d80
 
 **********************************
-2. STATIONARY/STARTERS/ROAMING/FOSSIL/GIFT POKÉMON
+2. STATIONARY/STARTERS/ROAMING/FOSSIL/GIFT POKÃ‰MON
 **********************************
-   2.1. Stationary pokémon are wild pokémon with overworld sprites: Groudon, Kyogre, 
+   2.1. Stationary pokÃ©mon are wild pokÃ©mon with overworld sprites: Groudon, Kyogre, 
 	Rayquaza, the Regi trio, the six Kecleons in Route 120 revealed with the Devon
-	Scope and the Voltorbs/Electrodes hidden as pokéballs. Codes must be activated
-	when you interact with the pokémon.
+	Scope and the Voltorbs/Electrodes hidden as pokÃ©balls. Codes must be activated
+	when you interact with the pokÃ©mon.
    2.2. Starters are the Hoenn and the Johto starter trios. Codes must be activated
-	when you choose the pokémon.
-   2.3. Roaming pokémon are Latios and Latias. Codes must be activated when you	watch
-	the TV news report after beating the Elite Four and choose the pokémon color.
-   2.4. Codes must be activated when you revive the fossil pokémon in Rustboro City.
-   2.5. Gift pokémon are the Wynaut egg received in Lavaridge Town, Beldum and Castform. 
-	Codes must be activated when you receive the pokémon.
+	when you choose the pokÃ©mon.
+   2.3. Roaming pokÃ©mon are Latios and Latias. Codes must be activated when you	watch
+	the TV news report after beating the Elite Four and choose the pokÃ©mon color.
+   2.4. Codes must be activated when you revive the fossil pokÃ©mon in Rustboro City.
+   2.5. Gift pokÃ©mon are the Wynaut egg received in Lavaridge Town, Beldum and Castform. 
+	Codes must be activated when you receive the pokÃ©mon.
 **********************************
 
 08067bf8:fc02f317
@@ -486,12 +486,12 @@ A. PERSONAL NOTES
 **********************************
 
 After some months programming Final Fantasy IX (PSP) codes in MIPS, I decided to take a
-different course and try myself out with one my favorite games, Pokémon HG/SS. It was my very first
+different course and try myself out with one my favorite games, PokÃ©mon HG/SS. It was my very first
 experience coding in ARM/THUMB and I could say it was a positive one. In general, ARM/THUMB is
 not so different from MIPS. The halfword instruction size in THUMB makes the code more compact, but
 it also makes some coding techniques way trickier to pull off. The biggest challenge caused by the
 halfword instruction size, in my opinion, is the short branch range. In fact, bl instructions have
-a range of ±32Mb from the address of the current instruction, which is significantly lower than
+a range of Â±32Mb from the address of the current instruction, which is significantly lower than
 the MIPS branches. The short range forces the programmer to find a zero memory block close enough 
 to be in the branch reach from the intercepted address, big enough to accommodate the codes and 
 stable enough to not be shared with any other routine. The number of blocks that meet these
