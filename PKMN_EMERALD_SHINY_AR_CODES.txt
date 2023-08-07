@@ -1,0 +1,520 @@
+
+ * -----------------------------------------------------------------------*
+ *		      POKÉMON EMERALD (US VERSION)			  *
+ * 	    GAMESHARK v. 1/2 - LEGAL SHINY POKÉMON ENCOUNTERS		  *	
+ * -----------------------------------------------------------------------*
+ * Programmed in ARM/THUMB and converted to the VBA-M code syntax	  *
+ * Copyright (C) 2023 Ciro Bogea Fernandes.				  *
+ * email: cirobfes@hotmail.com						  *
+ * -----------------------------------------------------------------------*
+
+**********************************
+COPYRIGHT DISCLAIMER
+**********************************
+
+ * This library is free software. You can redistribute it and/or modify it 
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation;
+
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+
+ * Permission to use these codes and its documentation *AS IT IS* for any purpose
+ * is hereby granted without fee, provided that the above copyright notice appear 
+ * in all copies and that both that copyright notice and this permission notice appear
+ * in supporting documentation.  It is provided "as is" without express or implied warranty. 
+
+**********************************
+INTRODUCTION
+**********************************
+
+In the world of Pokémon, the player can find wild pokémon through a wide variety of 
+forms, such as battles, gifts, eggs and special events. Depending on the type of encounter,
+a different function is used to compute the pokémon attributes based on a set of numbers, 
+ordered according to a function called RNG (random number generator). The main RNG in the
+3rd generation games is given by the linear formula:
+
+next RNG = (current RNG * 0x41c64e6d) + 0x6073
+
+On each step on a grass area, the game calls the RNG to decide for a battle against a
+wild pokémon. In case of a battle, the game starts calculating the attributes of the 
+opposing pokémon. The second RNG call is used to select the pokémon species out of a list 
+of ten or eleven encounter slots. The third RNG has no influence on the opposing pokémon
+structure. The fourth RNG sets the nature. Then, the game enters a loop state, calling the
+RNG twice on each cycle, to produce the so called PID (pokémon identification number). 
+The PID is the most important number in the pokémon data structure. It is used to define 
+many different attributes, like nature, gender and shininess. When the game finds a PID, 
+whose correspondent nature is equal to the nature set in the fourth RNG call, the function
+breaks the loop. Finally, the last two RNG calls define the pokémon IVs. Generation III 
+games apply the described routine, known as Method H, to calculate the wild pokémon 
+attributes for all encounter types (grass, dungeons, surfing, fishing). The only exception
+are starters/stationary/roamers/fossil/gift pokémon, which basically follow a simplified
+Method H variation.
+
+The codes in this document intercept the function that calculates the pokémon data structure,
+advance the RNG until a valid shiny RNG is found and return the code execution to its normal
+state, to let the game calculate the pokémon based on the shiny RNG. In other words, the
+codes force the game to always use RNGs that result in shiny pokémon. The codes *do not* change
+any other information besides the current RNG. Because of that, any shiny pokémon caught while
+the codes are activated are *100% legal*. The pokémon species, nature, PID, IVs, as well as 
+any other attribute, match the results from an existing and obtainable set of RNGs in the game.
+
+**********************************
+VBLANK
+**********************************
+
+Vblank is the name of a Generation 3 exclusive function responsible for updating the graphics
+on screen. It is triggered by a timer roughly once every frame. What is so special about 
+Vblank is the fact that it advances the RNG by one stage each time it is called and, if the
+timer triggers it while the Method H routine is being executed, the additional RNG call 
+breaks the linearity of the RNG sequence used to compute the pokémon attributes. This is 
+considered a programmation flaw, since one function affects the results of another function 
+in unpredictable fashions.
+
+According to the community research, Vblank and Method H relate to each other in three
+different ways. In Method H-1, Vblank is not triggered at all. In Method H-2, Vblank
+is called right after the PID is calculated. In Method H-4, Vblank is called after the
+first set of IVs is calculated. These results account only for the real hardware.
+
+Since our codes introduce lots of additional computation to the original game programmation,
+while they are running, Vblank is called multiple times during Method H. In order to avoid 
+pokémon that defy Methods H-1, H-2 or H-4 rules, the codes disable the Vblank RNG advancement 
+in the time interval between the encounter slot and the PID calculation. Although unnatural,
+the solution sucessfully forces the creation of legal Method H-1, H-2 and H-4 pokémon.
+
+**********************************
+ROM PATCH LIMITATION
+**********************************
+
+GameShark v.1/2, GameShark v.3/4 (aka Action Replay) and CodeBreaker are the three main 
+cheating devices for the Game Boy Advance. Each one of them has its own syntax, features and
+hardware limitations. For us, all that matters is the support for a specific type of code 
+called ROM patch. Basically, ROM patches change instructions stored in ROM addresses,
+forcing the game to perform the task the user wants instead of what was originally programmed.
+
+GameShark v.1/2 supports ONE single ROM patch, GameShark v.3/4 handles up to FOUR patches 
+and CodeBreaker provides no ROM patch functionality at all. Considering that each line in 
+our codes counts as a different ROM patch, we come to the bitter conclusion that no cheating 
+device available in the market is capable of running our codes on real hardware.
+
+For some odd reason, the original Visual Boy Advance branch (v. 1.8.0) can not apply raw codes
+to ROM addresses. Besides, the emulator supports a total amount of one hundred ROM patches 
+in GameShark v. 1/2 format, which is also less than our needs. The updated Visual Boy Advance-M
+fork (v. 2.1.5) had its cheating code support revamped. Not only it accepts ROM patches in raw
+format, it also removed the old one hundred code limitation. VBA-M shines as the only option to
+actually witness our codes in action. To insert the codes, click on Tools->Cheats->List Cheats->
+Add New Cheat->Generic Code. 
+
+Open the ROM file again whenever you remove ROM modifying codes, before inserting new ones. 
+VBA-M restore ROM values only when reading the ROM file. If you do not open the ROM, there is
+a high risk of crashing the program. 
+
+You can use AR Crypt to convert our raw codes to the GameShark v. 1/2 or to the GameShark 
+v. 3/4 notation. Don't forget to adjust the syntax accordingly before converting the codes. 
+
+**********************************
+LEADING POKÉMON NATURE
+**********************************
+
+If the leading pokémon in your party has a nature that affects the opposing wild pokémon
+attributes, such as Cute Charm, Synchronize, Pressure and Keen Eye, the game executes 
+additional RNG calls to compute those effects. Since the extra RNG calls modify the RNG 
+allignment established by our codes, the codes DO NOT work, if the leading pokémon has a
+nature with overworld effects.
+
+**********************************
+ENCOUNTER RATES
+**********************************
+
+When the trainer walks on grass areas or dungeons or surfs on water, the game calls the RNG
+and generates a number from 0 to 2880. If the number less than the encounter rate, a battle
+starts. The encounter rate is constant and relates to the area the player is at:
+				Emerald
+3.1.  Grass:			  320
+3.2.  Dungeons:			  160
+3.3.  Surfing:			  64
+3.4.  Rock Smash:		  320
+
+Fishing mechanics in Generation III are complex and won't be covered here.
+
+If the trainer uses Sweet Scent to attice wild pokémon, no encounter check is performed.
+
+If the random numbers that preceed a shiny RNG do not trigger a battle due to the encounter 
+rate, the codes in this document will discard the shiny RNG and search for another one. Hence,
+the lower the encounter rate in the area is, the more difficult it is to find a usable shiny RNG. 
+Since Sweet Scent ignores encounter checks, using them grants the maximum range of usable
+shiny RNGs.
+
+The user has the option to disable the encounter rate validation completely, by simply
+not activating the portion of code separated from the main body by a blank line, if it exists. 
+Remember that, without the encounter rate validation, the player will battle pokémon he/she
+would not normally do. It's important to underline that the pokémon community disconsiders 
+encounter rates when checking the pokémon legitimacy. The reason is that any RNG could be hit
+with Sweet Scent. I personally dissent, because Sweet Scent cannot be used in all circunstances, 
+for instance, under permanent rainy weather. It's really up to the user to decide the level of 
+legitimacy he/she wants.
+
+**********************************
+POKÉMON EMERALD INITIAL SEED
+**********************************
+
+When the player loads his/her save file in Pokémon Emerald, the game sets the initial
+RNG value to zero. Since the initial seed is always zero and given that the RNG sequence
+advances according to a linear function, Pokémon Emerald starts the one and exact same 
+RNG sequence everytime the save file is loaded. As the RNG advances very fast due to 
+Vblank, the casual player does not notice his/her actions are governed by the same set
+of numbers.
+
+Emerald fixed RNG is yet another huge programmation issue. No matter how fast Vblank is,
+it is not fast enough to cover the entire RNG sequence in less than 20 days of unpaused
+gameplay. Yes, almost a month! As a consequence, the vast majority of the game RNG becomes
+virtually inacessible to the player, which pretty much throws out of the window a myriad
+of shiny and competitive pokémon. Shiny hunting stationary pokémon through save/reset is
+also reduced to a meaningless minigame of hitting the same frame to catch the same pokémon.
+
+The fixed RNG sequence becomes evident when our codes are activated. Because the codes 
+advance a large amount of RNG numbers to find a shiny pokémon, it is easy to hit the same
+RNG in different gameplays. As a consequence, the player will keep encountering the same 
+sequence of pokémon every time he/she resets the game. There are some tricks that may help
+advancing the RNG faster to find later shiny frames:
+
+1. Use Sweet Scent to gain access to the largest RNG spread possible.
+
+2. Use a Repel and walk on grass or surf on water with the codes activated. The game still
+calculates the wild pokémon before discarding it due to the Repel effect. Hence, the codes
+keep advancing the RNG, as if the player were actually engaging in battles.
+
+3. Use VBA-M save/load state. As long as the player does not reset the game, the RNG 
+sequence is preserved. Do not abuse this method, though, as a way too far RNG may indicate
+cheating.
+
+**********************************
+OTHER WARNINGS
+**********************************
+
+Do not use more than one type of code at the same time in any circunstance. Since the 
+codes write different instruction routines to the same memory block, using more than one code
+may cause crashes and other unexpected behaviours.
+
+The codes add extra computational demand to the game hardware, that is obviously not
+originally programmed. As a consequence, the codes will cause lag. In most cases, the lag is
+unnoticeable, but it can reach a full second, particularly in low encounter rate areas.
+Using Sweet Scent or disabling the encounter rate validation code portion reduces the 
+lag considerably.
+
+**********************************
+1. GRASS/DUNGEON/SURFING/FISHING/ROCK SMASH POKÉMON
+**********************************
+
+080b5158:f8d2f2ca
+
+080b4aca:fc99f2ca
+080b4b86:fc3bf2ca
+080b4be2:fc0df2ca
+080007ba:fdb9f37e
+08067edc:fa38f317
+0837f300:f768b5e0
+0837f304:0400fc6d
+0837f308:f0000c00
+0837f30c:683ff979
+0837f310:42a0683e
+0837f314:2500d305
+0837f318:3e0451bd
+0837f31c:dafb2e00
+0837f320:3604e002
+0837f324:603e51bc
+0837f328:0000bde0
+0837f330:f000b580
+0837f334:687ff965
+0837f338:2f00683f
+0837f33c:f4f0d101
+0837f340:bd80f945
+0837f350:4648b5c0
+0837f354:f0004641
+0837f358:687ff953
+0837f35c:603e2600
+0837f360:0000bdc0
+0837f400:b08cb5f0
+0837f404:f8fcf000
+0837f408:21016878
+0837f40c:68b86001
+0837f410:6800210a
+0837f414:88011840
+0837f418:88419100
+0837f41c:68f89101
+0837f420:91026801
+0837f424:9e019d00
+0837f428:990268f8
+0837f42c:0c086001
+0837f430:f4f01c04
+0837f434:1c01f8cb
+0837f438:40694061
+0837f43c:29084071
+0837f440:68f8daf6
+0837f444:91026801
+0837f448:f8c0f4f0
+0837f44c:f8e0f000
+0837f450:f0000405
+0837f454:4328f8dd
+0837f458:f7682119
+0837f45c:0600fbc1
+0837f460:1c040e00
+0837f464:f8d4f000
+0837f468:21190405
+0837f46c:fbb8f768
+0837f470:0e000600
+0837f474:d00a42a0
+0837f478:f8caf000
+0837f47c:21194328
+0837f480:fbaef768
+0837f484:0e000600
+0837f488:d0cb42a0
+0837f48c:f000e7ea
+0837f490:f000f8bf
+0837f494:683ef8bd
+0837f498:2d006835
+0837f49c:f000d00c
+0837f4a0:21b4f8b7
+0837f4a4:f7680109
+0837f4a8:0400fb9b
+0837f4ac:59740c00
+0837f4b0:d2b742a0
+0837f4b4:e7f03d04
+0837f4b8:68352400
+0837f4bc:d0042d00
+0837f4c0:f884f4f0
+0837f4c4:3d045174
+0837f4c8:6034e7f8
+0837f4cc:bdf0b00c
+0837f600:47704f00
+0837f604:0837f700
+0837f610:480668f9
+0837f614:1c13680a
+0837f618:48054343
+0837f61c:600818c0
+0837f620:68114a04
+0837f624:60113901
+0837f628:47700c00
+0837f62c:eeb9eb65
+0837f630:0a3561a1
+0837f634:020249c0
+0837f700:03005550
+0837f704:0300554c
+0837f708:03005d90
+0837f70c:03005d80
+
+**********************************
+2. STATIONARY/STARTERS/ROAMING/FOSSIL/GIFT POKÉMON
+**********************************
+   2.1. Stationary pokémon are wild pokémon with overworld sprites: Groudon, Kyogre, 
+	Rayquaza, the Regi trio, the six Kecleons in Route 120 revealed with the Devon
+	Scope and the Voltorbs/Electrodes hidden as pokéballs. Codes must be activated
+	when you interact with the pokémon.
+   2.2. Starters are the Hoenn and the Johto starter trios. Codes must be activated
+	when you choose the pokémon.
+   2.3. Roaming pokémon are Latios and Latias. Codes must be activated when you	watch
+	the TV news report after beating the Elite Four and choose the pokémon color.
+   2.4. Codes must be activated when you revive the fossil pokémon in Rustboro City.
+   2.5. Gift pokémon are the Wynaut egg received in Lavaridge Town, Beldum and Castform. 
+	Codes must be activated when you receive the pokémon.
+**********************************
+
+08067bf8:fc02f317
+08067bfe:fba7f317
+080007ba:fdb9f37e
+0837f330:f000b580
+0837f334:687ff965
+0837f338:2f00683f
+0837f33c:f4f0d101
+0837f340:bd80f945
+0837f350:f4f0b5c0
+0837f354:f000f93b
+0837f358:687ff953
+0837f35c:603e2600
+0837f360:0000bdc0
+0837f400:b08cb5f0
+0837f404:f8fcf000
+0837f408:21016878
+0837f40c:68b86001
+0837f410:6800210a
+0837f414:88011840
+0837f418:88419100
+0837f41c:68f89101
+0837f420:91026801
+0837f424:9e019d00
+0837f428:990268f8
+0837f42c:0c086001
+0837f430:f4f01c04
+0837f434:1c01f8cb
+0837f438:40694061
+0837f43c:29084071
+0837f440:68f8daf6
+0837f444:91026801
+0837f448:f8e2f000
+0837f44c:bdf0b00c
+0837f600:47704f00
+0837f604:0837f700
+0837f610:480668f9
+0837f614:1c13680a
+0837f618:48054343
+0837f61c:600818c0
+0837f620:68114a04
+0837f624:60113901
+0837f628:47700c00
+0837f62c:eeb9eb65
+0837f630:0a3561a1
+0837f634:020249c0
+0837f700:03005550
+0837f704:0300554c
+0837f708:03005d90
+0837f70c:03005d80
+
+**********************************
+3. SAFARI ZONE (GRASS/SURFING/FISHING/ROCK SMASH)
+**********************************
+
+080b5158:f8d2f2ca
+
+080b4aca:fc99f2ca
+080b4b86:fc3bf2ca
+080b4be2:fc0df2ca
+080007ba:fdb9f37e
+08067edc:fa38f317
+0837f300:f768b5e0
+0837f304:0400fc6d
+0837f308:f0000c00
+0837f30c:683ff979
+0837f310:42a0683e
+0837f314:2500d305
+0837f318:3e0451bd
+0837f31c:dafb2e00
+0837f320:3604e002
+0837f324:603e51bc
+0837f328:0000bde0
+0837f330:f000b580
+0837f334:687ff965
+0837f338:2f00683f
+0837f33c:f4f0d101
+0837f340:bd80f945
+0837f350:4648b5c0
+0837f354:f0004641
+0837f358:687ff953
+0837f35c:603e2600
+0837f360:0000bdc0
+0837f400:b08cb5f0
+0837f404:f8fcf000
+0837f408:21016878
+0837f40c:68b86001
+0837f410:6800210a
+0837f414:88011840
+0837f418:88419100
+0837f41c:68f89101
+0837f420:91026801
+0837f424:9e019d00
+0837f428:990268f8
+0837f42c:0c086001
+0837f430:f4f01c04
+0837f434:1c01f8cb
+0837f438:40694061
+0837f43c:29084071
+0837f440:68f8daf6
+0837f444:91026801
+0837f448:f8c0f4f0
+0837f44c:f8e0f000
+0837f450:f0000405
+0837f454:4328f8dd
+0837f458:f7682119
+0837f45c:0600fbc1
+0837f460:1c040e00
+0837f464:f8d4f000
+0837f468:21190405
+0837f46c:fbb8f768
+0837f470:0e000600
+0837f474:d00a42a0
+0837f478:f8caf000
+0837f47c:21194328
+0837f480:fbaef768
+0837f484:0e000600
+0837f488:d0cb42a0
+0837f48c:f000e7ea
+0837f490:f000f8bf
+0837f494:f000f8bd
+0837f498:683ef8bb
+0837f49c:2d006835
+0837f4a0:f000d00c
+0837f4a4:21b4f8b5
+0837f4a8:f7680109
+0837f4ac:0400fb99
+0837f4b0:59740c00
+0837f4b4:d2b542a0
+0837f4b8:e7f03d04
+0837f4bc:68352400
+0837f4c0:d0042d00
+0837f4c4:f882f4f0
+0837f4c8:3d045174
+0837f4cc:6034e7f8
+0837f4d0:bdf0b00c
+0837f600:47704f00
+0837f604:0837f700
+0837f610:480668f9
+0837f614:1c13680a
+0837f618:48054343
+0837f61c:600818c0
+0837f620:68114a04
+0837f624:60113901
+0837f628:47700c00
+0837f62c:eeb9eb65
+0837f630:0a3561a1
+0837f634:020249c0
+0837f638:00000000
+0837f63c:00000000
+0837f640:f7ffb500
+0837f644:211fffe5
+0837f648:223e4001
+0837f64c:40020112
+0837f650:231f0952
+0837f654:4003029b
+0837f658:bd000a9b
+0837f700:03005550
+0837f704:0300554c
+0837f708:03005d90
+0837f70c:03005d80
+
+**********************************
+A. PERSONAL NOTES
+**********************************
+
+After some months programming Final Fantasy IX (PSP) codes in MIPS, I decided to take a
+different course and try myself out with one my favorite games, Pokémon HG/SS. It was my very first
+experience coding in ARM/THUMB and I could say it was a positive one. In general, ARM/THUMB is
+not so different from MIPS. The halfword instruction size in THUMB makes the code more compact, but
+it also makes some coding techniques way trickier to pull off. The biggest challenge caused by the
+halfword instruction size, in my opinion, is the short branch range. In fact, bl instructions have
+a range of ±32Mb from the address of the current instruction, which is significantly lower than
+the MIPS branches. The short range forces the programmer to find a zero memory block close enough 
+to be in the branch reach from the intercepted address, big enough to accommodate the codes and 
+stable enough to not be shared with any other routine. The number of blocks that meet these
+requirements is considerably limited. Nevertheless, putting this issue aside, ARM/THUMB is 
+objectively easier to read, write and modify than MIPS.
+
+Quite often, I stumble upon comments of people who consider GameShark/Action Replay codes
+a bad pratice, labeling them as cheating or even hacking. Such opinions make me somewhat sad,
+because they are based on critically flawed misconceptions, that reflect how poor our educational
+systems are. GameShark/Action Replay codes are in fact machine language, just like MIPS and ARM/THUMB.
+The same way a person learns a programming language, like C or Java, he/she can acquire
+the proper knowledge to read and write GameShark/Action Replay. Creating codes is equivalent to
+programming.
+
+I strongly encourage all readers to learn machine language. It's easy, it's accessible, it's fun. 
+Do not get carried away by all weird symbols and terminology. There are very few instructions 
+to learn: mov, ldr/str, ldmia/stmia, b, cmp, push/pop, the logical (lsl, lsr, and, orr, eor) and 
+the mathematical (add, sub, rsub, mul) operations, nothing more, nothing less. Consider learning 
+machine code like learning a language with only a handful of words. I am positive anyone can aquire
+very satisfactory skills in just a couple of days. The time investiment is totally worth it. 
+The knowledge on machine language will allow you to play and enjoy your favourite games on a brand
+new level, like you never did in your life. 
+
+If you want to reach me, send an email to cirobfes@hotmail.com
+
+EOF
