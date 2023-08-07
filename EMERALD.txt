@@ -1,7 +1,7 @@
 
  * -----------------------------------------------------------------------*
  *		      POKÉMON EMERALD (US VERSION)			  *
- * 	    GAMESHARK v. 1/2 - LEGAL SHINY POKÉMON ENCOUNTERS		  *	
+ * 	       RAW CODES - LEGAL SHINY POKÉMON ENCOUNTERS		  *	
  * -----------------------------------------------------------------------*
  * Programmed in ARM/THUMB and converted to the VBA-M code syntax	  *
  * Copyright (C) 2023 Ciro Bogea Fernandes.				  *
