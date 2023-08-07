@@ -5,6 +5,8 @@ Written in C++/ARM/THUMB.
 
 Games currently covered:
 
+ * Pokémon Emerald
+ 
  * Pokémon Platinum
 
  * Pokémon HeartGold/Soulsilver
